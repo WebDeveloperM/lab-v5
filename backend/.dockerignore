@@ -11,3 +11,16 @@ staticfiles/
 .gitignore
 *.log
 logs/
+.idea
+
+# Faqat nginx konteyneriga volume orqali ulanadi, image ichida kerak emas
+certs/
+docker-compose.yml
+nginx.conf
+
+# Runtime'da ishlatilmaydigan yordamchi/arxiv fayllar
+*.md
+sqlite_dump.sql
+sqlite_to_postgres.load
+migration_script.py
+requirements.local.txt

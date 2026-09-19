@@ -6,3 +6,7 @@ dist
 .gitignore
 *.md
 *.log
+
+# Faqat nginx konteyneriga volume orqali ulanadi, image ichida kerak emas
+certs/
+docker-compose.yml
