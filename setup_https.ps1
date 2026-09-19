@@ -1,5 +1,6 @@
 param(
     [string]$HostIp = "",
+    [string]$EmployeeServiceIp = "",
     [switch]$OnlyCerts,
     [switch]$OnlyStart,
     [switch]$SkipBuild,
@@ -131,7 +132,11 @@ if (-not $HostIp) {
 }
 
 if (-not $HostIp) {
-    $HostIp = "192.168.2.74"
+    $HostIp = "192.168.101.23"
+}
+
+if (-not $EmployeeServiceIp) {
+    $EmployeeServiceIp = "192.168.101.6"
 }
 
 $usedMkcert = $false
@@ -167,7 +172,7 @@ if (-not $OnlyStart) {
         New-CertWithMkcert -MkcertExe $mkcertExe -KeyPath $frontendKey -CrtPath $frontendCrt -Ip $HostIp
 
         Write-Host "[4/4] Employee Service sertifikat yaratilmoqda (mkcert)..." -ForegroundColor Cyan
-        New-CertWithMkcert -MkcertExe $mkcertExe -KeyPath $employeeKey -CrtPath $employeeCrt -Ip $HostIp
+        New-CertWithMkcert -MkcertExe $mkcertExe -KeyPath $employeeKey -CrtPath $employeeCrt -Ip $EmployeeServiceIp
         $usedMkcert = $true
     }
     elseif ($hasLocalOpenSsl) {
@@ -178,7 +183,7 @@ if (-not $OnlyStart) {
         New-Cert -KeyPath $frontendKey -CrtPath $frontendCrt -Ip $HostIp
 
         Write-Host "[3/3] Employee Service sertifikat yaratilmoqda (local openssl)..." -ForegroundColor Cyan
-        New-Cert -KeyPath $employeeKey -CrtPath $employeeCrt -Ip $HostIp
+        New-Cert -KeyPath $employeeKey -CrtPath $employeeCrt -Ip $EmployeeServiceIp
     }
     else {
         Write-Host "[1/3] Backend sertifikat yaratilmoqda (docker openssl)..." -ForegroundColor Cyan
@@ -188,7 +193,7 @@ if (-not $OnlyStart) {
         New-CertWithDocker -CertDir $frontendCertDir -KeyFile "frontend.key" -CrtFile "frontend.crt" -Ip $HostIp
 
         Write-Host "[3/3] Employee Service sertifikat yaratilmoqda (docker openssl)..." -ForegroundColor Cyan
-        New-CertWithDocker -CertDir $employeeCertDir -KeyFile "employee.key" -CrtFile "employee.crt" -Ip $HostIp
+        New-CertWithDocker -CertDir $employeeCertDir -KeyFile "employee.key" -CrtFile "employee.crt" -Ip $EmployeeServiceIp
     }
 
     Write-Host "Sertifikatlar yaratildi:" -ForegroundColor Green
@@ -233,9 +238,9 @@ finally {
 }
 
 Write-Host "Tayyor." -ForegroundColor Green
-Write-Host "Frontend: https://${HostIp}:6060"
-Write-Host "Backend API: https://${HostIp}:8050/api/v1"
-Write-Host "Employee Service: https://${HostIp}:5000"
+Write-Host "Frontend: https://${HostIp}:6030"
+Write-Host "Backend API: https://${HostIp}:8030/api/v1"
+Write-Host "Employee Service: https://${EmployeeServiceIp}:5000"
 if ($usedMkcert) {
     Write-Host "mkcert ishlatildi: brauzerda sertifikat trusted bo'lishi kerak." -ForegroundColor Green
 }

@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: tb_frontend
     ports:
-      - "6060:443"
+      - "6030:443"
     volumes:
       - ./certs:/etc/nginx/certs:ro
     extra_hosts:
