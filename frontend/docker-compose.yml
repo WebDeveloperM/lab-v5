@@ -3,7 +3,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: tb_frontend
+    container_name: laboratory_frontend
     ports:
       - "6030:443"
     volumes:

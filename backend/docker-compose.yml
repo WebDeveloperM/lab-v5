@@ -6,9 +6,9 @@ services:
       context: ${EMPLOYEE_SERVICE_DIR:-../employee_service}
       dockerfile: Dockerfile
       cache_from:
-        - tb_employee_service:latest
-    image: tb_employee_service:latest
-    container_name: tb_employee_service
+        - laboratory_employee_service:latest
+    image: laboratory_employee_service:latest
+    container_name: laboratory_employee_service
     restart: unless-stopped
     command: sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8030"
     volumes:
@@ -57,7 +57,7 @@ services:
 
   nginx:
     image: nginx:1.27-alpine
-    container_name: tb_backend_https
+    container_name: laboratory_backend_https
     restart: unless-stopped
     depends_on:
       - web
@@ -71,7 +71,7 @@ services:
     profiles:
       - embedded-employee-service
     image: nginx:1.27-alpine
-    container_name: tb_employee_https
+    container_name: laboratory_employee_https
     restart: unless-stopped
     depends_on:
       - employee-service
