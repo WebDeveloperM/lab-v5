@@ -10,9 +10,13 @@ ENV PYTHONUNBUFFERED=1
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && apt-get install -y --no-install-recommends \
-    gcc \
-    libpq-dev
+    set -e; \
+    for i in 1 2 3; do \
+        apt-get update && apt-get install -y --no-install-recommends gcc libpq-dev && exit 0; \
+        echo "apt urinish $i muvaffaqiyatsiz (mirror hash mismatch bo'lishi mumkin), qayta urinilmoqda..."; \
+        sleep 5; \
+    done; \
+    exit 1
 
 COPY requirements.txt .
 RUN --mount=type=cache,target=/root/.cache/pip \
@@ -29,9 +33,13 @@ ENV PATH=/root/.local/bin:$PATH
 
 RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
     --mount=type=cache,target=/var/lib/apt,sharing=locked \
-    apt-get update && apt-get install -y --no-install-recommends \
-    libgl1 \
-    libglib2.0-0
+    set -e; \
+    for i in 1 2 3; do \
+        apt-get update && apt-get install -y --no-install-recommends libgl1 libglib2.0-0 && exit 0; \
+        echo "apt urinish $i muvaffaqiyatsiz (mirror hash mismatch bo'lishi mumkin), qayta urinilmoqda..."; \
+        sleep 5; \
+    done; \
+    exit 1
 
 COPY --from=builder /root/.local /root/.local
 COPY . .
