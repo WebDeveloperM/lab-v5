@@ -11,10 +11,12 @@ const JET_A1_STATIC = [
   { key: 'jet-a1-izv', name: 'Извещение для Jet А-1',  standard: '' },
 ];
 
-// Fallback cards for a fresh server whose passport_templates table has no Бензин rows yet — only
-// rendered when the category is completely empty (see hasRealBenzinTemplates below), so an
-// already-populated server (where a product may have been renamed, e.g. "Бензин АИ-92" →
-// "Бензин Аи-92-К2-Л") never shows a redundant default-named card next to the real one.
+// The 8 Бензин product lines, always rendered — same rule as every other static category:
+// a DB row whose name matches one of these is folded into the static card by
+// isStaticTemplateName, and clicking the card routes through /pasporta/template/new?item=...,
+// which resolves to the real DB template when one exists and stays virtual (id=0) when it
+// doesn't. A DB row renamed away from these names (e.g. "Бензин АИ-92" →
+// "Бензин Аи-92-К2-Л") no longer matches and still shows as its own card.
 const BENZIN_STATIC = [
   { key: 'benzin-ai-91',            name: 'Бензин АИ-91',            standard: "O'zDSt 3031:2015" },
   { key: 'benzin-ai-91-prisadka',   name: 'Бензин АИ-91+присадка',   standard: "O'zDSt 3031:2015" },
@@ -148,6 +150,7 @@ export default function PasportaSelectPage() {
   }, [templates]);
 
   const jetStaticNames = new Set(JET_A1_STATIC.map(p => normalizeStaticName(p.name)));
+  const benzinStaticNames = new Set(BENZIN_STATIC.map(p => normalizeStaticName(p.name)));
   const dieselStaticNames = new Set(DIESEL_STATIC.map(p => normalizeStaticName(p.name)));
   const dieselSsdfStaticNames = new Set(DIESEL_SSDF_STATIC.map(p => normalizeStaticName(p.name)));
   const dieselEcoStaticNames = new Set(DIESEL_ECO_STATIC.map(p => normalizeStaticName(p.name)));
@@ -159,7 +162,7 @@ export default function PasportaSelectPage() {
 
   const isStaticTemplateName = (name: string) => {
     const n = normalizeStaticName(name);
-    return jetStaticNames.has(n) || dieselStaticNames.has(n) || dieselSsdfStaticNames.has(n) || dieselEcoStaticNames.has(n)
+    return jetStaticNames.has(n) || benzinStaticNames.has(n) || dieselStaticNames.has(n) || dieselSsdfStaticNames.has(n) || dieselEcoStaticNames.has(n)
       || kerosineStaticNames.has(n) || mazutStaticNames.has(n) || rastvoritelStaticNames.has(n) || seraStaticNames.has(n) || gazStaticNames.has(n);
   };
 
@@ -170,18 +173,13 @@ export default function PasportaSelectPage() {
     return !isStaticTemplateName(t.name);
   });
 
-  // Бензин has no name-level static/dynamic split like the other categories — its fallback
-  // cards only ever stand in for a completely empty category (a fresh server), so they must
-  // never add to a count that already has real rows in it.
-  const hasRealBenzinTemplates = templates.some(t => (t.category || '').toLowerCase() === 'бензин');
-
   const getCategoryCount = (category: string) => {
     const categoryVisibleCount = templates
       .filter(t => t.category === category)
       .filter(t => !isStaticTemplateName(t.name)).length;
 
     const categoryLower = category.toLowerCase();
-    if (categoryLower === 'бензин') return hasRealBenzinTemplates ? categoryVisibleCount : BENZIN_STATIC.length;
+    if (categoryLower === 'бензин') return categoryVisibleCount + BENZIN_STATIC.length;
     if (categoryLower === 'дизель эко') return categoryVisibleCount + DIESEL_ECO_STATIC.length;
     if (categoryLower === 'дизель евро ssdf') return categoryVisibleCount + DIESEL_SSDF_STATIC.length;
     if (categoryLower.includes('дизель')) return categoryVisibleCount + DIESEL_STATIC.length;
@@ -194,7 +192,7 @@ export default function PasportaSelectPage() {
     return categoryVisibleCount;
   };
 
-  const allCount = templates.filter(t => !isStaticTemplateName(t.name)).length + JET_A1_STATIC.length + (hasRealBenzinTemplates ? 0 : BENZIN_STATIC.length) + DIESEL_STATIC.length + DIESEL_SSDF_STATIC.length + DIESEL_ECO_STATIC.length + KEROSINE_STATIC.length + MAZUT_STATIC.length + RASTVORITEL_STATIC.length + SERA_STATIC.length + GAZ_STATIC.length;
+  const allCount = templates.filter(t => !isStaticTemplateName(t.name)).length + JET_A1_STATIC.length + BENZIN_STATIC.length + DIESEL_STATIC.length + DIESEL_SSDF_STATIC.length + DIESEL_ECO_STATIC.length + KEROSINE_STATIC.length + MAZUT_STATIC.length + RASTVORITEL_STATIC.length + SERA_STATIC.length + GAZ_STATIC.length;
 
   const handleSelect = (t: Template) => {
     const isBenzin = (t.category || '').toLowerCase().includes('бензин');
@@ -209,7 +207,7 @@ export default function PasportaSelectPage() {
   };
 
   const showJetStatic = !activeCategory || activeCategory.toLowerCase().includes('jet');
-  const showBenzinStatic = !hasRealBenzinTemplates && (!activeCategory || activeCategory.toLowerCase() === 'бензин');
+  const showBenzinStatic = !activeCategory || activeCategory.toLowerCase() === 'бензин';
   const showDieselStatic = !activeCategory || activeCategory.toLowerCase() === 'дизель';
   const showDieselSsdfStatic = !activeCategory || activeCategory.toLowerCase() === 'дизель евро ssdf';
   const showDieselEcoStatic = !activeCategory || activeCategory.toLowerCase() === 'дизель эко';
