@@ -42,8 +42,12 @@ const sharedEnv = readSharedEnv();
 const publicBaseUrl = String(sharedEnv.PUBLIC_BASE_URL || 'https://192.168.101.23').trim().replace(/\/+$/, '');
 const backendPort = String(sharedEnv.BACKEND_PORT || '8030').trim();
 const frontendPort = String(sharedEnv.FRONTEND_PORT || '6030').trim();
+// Faqat Vite DEV-server proxy'si uchun (prod'da frontend nginx'i /api ni o'zi uzatadi).
+// docker-compose buni `environment:` orqali, ya'ni PROCESS env sifatida beradi — .env
+// fayllarida yo'q, shuning uchun process.env birinchi o'rinda tekshiriladi. Zaxira qiymat
+// ildizdagi docker-compose.yml dagi servis nomi bilan bir xil bo'lishi shart ("web").
 const backendTarget = String(
-  sharedEnv.BACKEND_INTERNAL_URL || `http://backend:8030`
+  process.env.BACKEND_INTERNAL_URL || sharedEnv.BACKEND_INTERNAL_URL || `http://web:8030`
 ).trim().replace(/\/+$/, '');
 const frontendPublicUrl = `${publicBaseUrl}:${frontendPort}`;
 
