@@ -26,7 +26,7 @@ def _normalize_public_base_url(raw_value, fallback):
     value = (raw_value or fallback).strip().rstrip('/')
     parsed = urlparse(value)
     if not parsed.scheme or not parsed.hostname:
-        raise ValueError('PUBLIC_BASE_URL must include scheme and hostname, for example https://192.168.2.74')
+        raise ValueError('PUBLIC_BASE_URL must include scheme and hostname, for example https://192.168.101.23')
     return value
 
 
@@ -44,10 +44,10 @@ def _with_http_and_https(url):
 
 PUBLIC_BASE_URL = _normalize_public_base_url(
     os.environ.get('PUBLIC_BASE_URL', ''),
-    'https://192.168.2.74',
+    'https://192.168.101.23',
 )
-BACKEND_PORT = int(os.environ.get('BACKEND_PORT', '8050'))
-FRONTEND_PORT = int(os.environ.get('FRONTEND_PORT', '6060'))
+BACKEND_PORT = int(os.environ.get('BACKEND_PORT', '8030'))
+FRONTEND_PORT = int(os.environ.get('FRONTEND_PORT', '6030'))
 EMPLOYEE_SERVICE_PORT = int(os.environ.get('EMPLOYEE_SERVICE_PORT', '5000'))
 PUBLIC_HOST = urlparse(PUBLIC_BASE_URL).hostname
 FRONTEND_PUBLIC_URL = _build_public_url(PUBLIC_BASE_URL, FRONTEND_PORT)
@@ -300,7 +300,7 @@ FACE_ID_LIVE_BURST_MOTION_THRESHOLD = float(os.environ.get('FACE_ID_LIVE_BURST_M
 FACE_ID_LIVE_BURST_MIN_FRAMES = int(os.environ.get('FACE_ID_LIVE_BURST_MIN_FRAMES', '8'))
 FACE_ID_BLINK_SCORE_DROP_THRESHOLD = float(os.environ.get('FACE_ID_BLINK_SCORE_DROP_THRESHOLD', '3.0'))
 EMPLOYEE_SERVICE_ENABLED = _env_bool('EMPLOYEE_SERVICE_ENABLED', False)
-EMPLOYEE_SERVICE_BASE_URL = os.environ.get('EMPLOYEE_SERVICE_BASE_URL', 'http://127.0.0.1:5000').strip()
+EMPLOYEE_SERVICE_BASE_URL = os.environ.get('EMPLOYEE_SERVICE_BASE_URL', 'https://192.168.101.6:5000').strip()
 EMPLOYEE_SERVICE_PUBLIC_URL = os.environ.get('EMPLOYEE_SERVICE_PUBLIC_URL', EMPLOYEE_SERVICE_PUBLIC_URL_DEFAULT).strip()
 EMPLOYEE_SERVICE_API_KEY = os.environ.get('EMPLOYEE_SERVICE_API_KEY', 'dev-employee-service-key').strip()
 EMPLOYEE_SERVICE_TIMEOUT = int(os.environ.get('EMPLOYEE_SERVICE_TIMEOUT', '15'))

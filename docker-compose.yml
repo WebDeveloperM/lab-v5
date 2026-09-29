@@ -1,5 +1,16 @@
+# DEV rejim (Django runserver + Vite dev server, live-reload bilan).
+#
+# Asosiy/PROD yo'l bu EMAS: setup_https.ps1 skripti backend/docker-compose.yml va
+# frontend/docker-compose.yml fayllarini alohida ishga tushiradi (u yerda frontend
+# nginx bilan build qilinadi). Konteyner nomlari o'sha fayllar bilan bir xil, shuning
+# uchun ikkalasini bir vaqtda ishga tushirib bo'lmaydi — faqat bittasi.
+#
+# Manzillar .env dagi qiymatlar bilan mos: backend 8030, frontend 6030,
+# employee_service https://192.168.101.6:5000, PostgreSQL 192.168.101.6:5432.
 services:
-  backend:
+  # Nomi "web" — backend/nginx.conf dagi `upstream django_upstream { server web:8030; }`
+  # aynan shu nomga ulanadi.
+  web:
     build:
       context: ./backend
       dockerfile: Dockerfile
@@ -14,13 +25,14 @@ services:
       - .env
       - ./backend/.env
     environment:
-      POSTGRES_HOST: host.docker.internal
-      EMPLOYEE_SERVICE_BASE_URL: https://192.168.2.74:5000
-      EMPLOYEE_SERVICE_PUBLIC_URL: https://192.168.2.74:5000
+      POSTGRES_HOST: 192.168.101.6
+      POSTGRES_PORT: "5432"
+      EMPLOYEE_SERVICE_BASE_URL: https://192.168.101.6:5000
+      EMPLOYEE_SERVICE_PUBLIC_URL: https://192.168.101.6:5000
       EMPLOYEE_SERVICE_VERIFY_SSL: "false"
     command: >
       sh -c "python manage.py migrate &&
-             python manage.py runserver 0.0.0.0:8020"
+             python manage.py runserver 0.0.0.0:8030"
     extra_hosts:
       - "host.docker.internal:host-gateway"
 
@@ -29,9 +41,9 @@ services:
     container_name: laboratory_backend_https
     restart: unless-stopped
     depends_on:
-      - backend
+      - web
     ports:
-      - "8020:443"
+      - "8030:443"
     volumes:
       - ./backend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
       - ./backend/certs:/etc/nginx/certs:ro
@@ -45,14 +57,17 @@ services:
     image: laboratory_frontend:latest
     container_name: laboratory_frontend
     restart: unless-stopped
+    # Dockerfile.dev CMD: npm run dev -- --host 0.0.0.0 --port 6030
     ports:
-      - "6020:6020"
+      - "6030:6030"
     environment:
       CHOKIDAR_USEPOLLING: "true"
       WATCHPACK_POLLING: "true"
-      BACKEND_INTERNAL_URL: http://backend:8020
+      BACKEND_INTERNAL_URL: http://web:8030
     volumes:
       - ./frontend:/app
+      # Markaziy .env konteyner ichida /app/.env sifatida ko'rinadi, shuning uchun
+      # vite.config.js undan PUBLIC_BASE_URL va portlarni o'qiy oladi.
       - ./.env:/app/.env:ro
       - frontend_node_modules:/app/node_modules
     depends_on:

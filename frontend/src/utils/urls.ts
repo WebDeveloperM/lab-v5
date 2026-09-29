@@ -8,7 +8,9 @@ const resolveBackendApiUrl = () => {
 		return trimTrailingSlash(configuredApiUrl)
 	}
 
-	return `https://${window.location.hostname}:8020/api/v1`
+	// Frontend nginx'i /api/ ni backend'ga (:8030) proksilaydi, shuning uchun
+	// port qat'iy yozilmaydi — joriy origin ishlatiladi.
+	return `${window.location.origin}/api/v1`
 }
 
 const resolveEmployeeServiceWebUrl = () => {

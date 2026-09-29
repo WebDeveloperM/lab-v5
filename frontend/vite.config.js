@@ -7,19 +7,24 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const readSharedEnv = () => {
-  // In Docker dev container, /app parent is "/", so ../.env is unavailable.
-  // Try local frontend .env first, then parent workspace .env.
+  // URL konfiguratsiyasi markaziy ../.env da (frontend/.env ning o'z izohiga qarang), shuning
+  // uchun u BAZA, frontend/.env esa faqat ustidan yozadi. Ilgari bu yerda faqat birinchi mavjud
+  // fayl o'qilardi — frontend/.env esa doim mavjud (ichida faqat COMPOSE_PROJECT_NAME), shu
+  // sababli markaziy ../.env hech qachon o'qilmay, hamma URL pastdagi literal qiymatlarga
+  // tushib ketardi. Docker prod build'ida kontekst faqat frontend/ bo'lgani uchun ../.env
+  // yo'q — u yerda literal qiymatlar yagona manba, ularni ../.env bilan mos tuting.
   const envCandidates = [
-    path.resolve(__dirname, '.env'),
     path.resolve(__dirname, '../.env'),
+    path.resolve(__dirname, '.env'),
   ];
-  const envPath = envCandidates.find((candidate) => fs.existsSync(candidate));
-  if (!envPath) {
+  const envPaths = envCandidates.filter((candidate) => fs.existsSync(candidate));
+  if (envPaths.length === 0) {
     return {};
   }
 
-  return fs
-    .readFileSync(envPath, 'utf-8')
+  return envPaths
+    .map((envPath) => fs.readFileSync(envPath, 'utf-8'))
+    .join('\n')
     .split(/\r?\n/)
     .reduce((accumulator, rawLine) => {
       const line = rawLine.trim();
@@ -43,7 +48,7 @@ const backendTarget = String(
 const frontendPublicUrl = `${publicBaseUrl}:${frontendPort}`;
 
 const employeeServicePublicUrl = String(
-  sharedEnv.EMPLOYEE_SERVICE_PUBLIC_URL || 'http://192.168.101.6:5000'
+  sharedEnv.EMPLOYEE_SERVICE_PUBLIC_URL || 'https://192.168.101.6:5000'
 ).trim().replace(/\/+$/, '');
 const bnpzIdClientId = String(sharedEnv.BNPZID_CLIENT_ID || 'base-laboratory').trim() || 'base-laboratory';
 const backendApiUrl = `${frontendPublicUrl}/api/v1`;
@@ -61,7 +66,7 @@ export default defineConfig({
     'import.meta.env.VITE_BNPZID_CLIENT_ID': JSON.stringify(bnpzIdClientId),
   },
   server: {
-    port: 6020,
+    port: Number(frontendPort) || 6030,
     host: '0.0.0.0',
     https: hasFrontendHttpsCerts
       ? {
