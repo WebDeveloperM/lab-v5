@@ -26,11 +26,12 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
   // const canSeeBaseImageChangeLogs = role === 'admin' || isManagerTierRole(role);
   const canSeeDashboard = pageAccess.dashboard;
   const canSeePassports = pageAccess.passports;
+  const canSeeSpravki = pageAccess.spravki;
   const canSeeSettings = pageAccess.settings;
   // const canSeePPEArrival = pageAccess.ppe_arrival;
   // const canSeeStatistics = pageAccess.statistics;
   const canEditBaseSettings = role === 'admin' || role === 'it_center' || isManagerTierRole(role);
-  const canSeePendingApprovals = isAdmin || role === 'sttl_head' || role === 'czl_head' || role === 'dispatcher';
+  const canSeePendingApprovals = pageAccess.pending_approvals;
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
   const canManageFaceIdControl = featureAccess.face_id_control;
   const isSettingsRoute = pathname === '/nastroyka' || pathname.startsWith('/nastroyka/');
@@ -341,7 +342,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                   </NavLink>
                 </li>
               )}
-              {canSeePassports && canSeePendingApprovals && (
+              {canSeePendingApprovals && (
                 <li>
                   <NavLink
                     to="/pasporta/pending-approvals"
@@ -359,6 +360,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                   </NavLink>
                 </li>
               )}
+              {canSeeSpravki && (
               <li>
                 <NavLink
                   to="/spravki"
@@ -368,6 +370,7 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                   {sidebarOpen && 'Справки'}
                 </NavLink>
               </li>
+              )}
               {canSeeSettings && settingsMenuItems.length > 0 && (
                 <SidebarLinkGroup activeCondition={isSettingsRoute}>
                   {(handleClick, open) => {

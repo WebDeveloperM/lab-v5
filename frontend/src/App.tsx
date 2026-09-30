@@ -90,14 +90,14 @@ function App() {
   // pageAccess.settings: the passport form renders the template page, and Начальник смены
   // has to reach it without being handed the whole Настройки section.
   const canAccessPassports = pageAccess.passports;
-  // The form is also the passport editor — PasportaPage offers "Tahrirlash" to every role
-  // except «Обычный пользователь». This is not a way in to *creating* a passport:
-  // PassportListCreateView rejects a POST from anyone but Админ and Начальник смены.
-  const canOpenPassportForm = canAccessPassports && trustedRole !== 'user';
-  // Справку создаёт только Начальник смены (Админ — как везде). Совпадает с canCreateSpravka
-  // в SpravkiPage.tsx и с проверкой в SpravkaListCreateView. Гейтится только выбор шаблона:
-  // /spravki/create с ?id=... — это ещё и редактор, открытый всем ролям кроме «Обычный пользователь».
-  const canCreateSpravka = trustedRole === 'admin' || trustedRole === 'shift_head';
+  const canAccessPendingApprovals = pageAccess.pending_approvals;
+  const canAccessSpravki = pageAccess.spravki;
+  // Шаблон-страница служит и формой создания, и редактором паспорта, поэтому сюда
+  // пускает любое из двух прав. Сам POST всё равно проверяется в PassportListCreateView.
+  const canOpenPassportForm =
+    canAccessPassports && (featureAccess.passport_create || featureAccess.passport_edit);
+  // Совпадает с проверкой feature spravka_create в SpravkaListCreateView.
+  const canCreateSpravka = featureAccess.spravka_create;
   const canAccessDailyPpeIssued = trustedRole === 'admin' || isManagerTierRole(trustedRole);
   const canAccessBaseImageChangeLogs = trustedRole === 'admin' || isManagerTierRole(trustedRole);
   const fallbackRoute = getFirstAccessibleRoute(pageAccess) || '/no-access';
@@ -539,7 +539,7 @@ function App() {
         <Route
           path="/pasporta/pending-approvals"
           element={
-            isAuthenticated() && canAccessPassports ? (
+            isAuthenticated() && canAccessPendingApprovals ? (
               <>
                 <PageTitle title="На подписи мне" />
                 <PendingApprovalsPage />
@@ -606,7 +606,7 @@ function App() {
         <Route
           path="/spravki"
           element={
-            isAuthenticated() ? (
+            isAuthenticated() && canAccessSpravki ? (
               <>
                 <PageTitle title="Справки" />
                 <SpravkiPage />
@@ -619,7 +619,7 @@ function App() {
         <Route
           path="/spravki/select"
           element={
-            isAuthenticated() ? (
+            isAuthenticated() && canAccessSpravki ? (
               canCreateSpravka ? (
                 <>
                   <PageTitle title="Добавить справку — выбор шаблона" />
@@ -636,7 +636,7 @@ function App() {
         <Route
           path="/spravki/create"
           element={
-            isAuthenticated() ? (
+            isAuthenticated() && canAccessSpravki ? (
               <>
                 <PageTitle title="Создать справку" />
                 <SpravkiCreatePage />

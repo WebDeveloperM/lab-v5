@@ -6,7 +6,7 @@ import { toast } from 'react-toastify';
 import Breadcrumb from '../../components/Breadcrumbs/Breadcrumb';
 import axioss from '../../api/axios';
 import { BASE_URL } from '../../utils/urls';
-import { normalizeRole } from '../../utils/pageAccess';
+import { getStoredFeatureAccess, normalizeRole } from '../../utils/pageAccess';
 import SpravkaViewDrawer from '../../components/Spravki/SpravkaViewDrawer';
 
 type Spravka = {
@@ -105,8 +105,10 @@ const tdCls = 'px-4 py-3 text-sm text-black dark:text-white border-b border-stro
 
 export default function SpravkiPage() {
   const navigate = useNavigate();
+  // SpravkaListCreateView dagi spravka_create feature tekshiruvi bilan bir xil.
+  const canCreateSpravka = useMemo(() => getStoredFeatureAccess().spravka_create, []);
+  // Справкани tahrirlash uchun alohida feature kiritilmadi — eskicha rol bo'yicha.
   const role = useMemo(() => normalizeRole(localStorage.getItem('role')), []);
-  const canCreateSpravka = role === 'admin' || role === 'shift_head';
   const canEditSpravka = role !== 'user';
   const [list, setList] = useState<Spravka[]>([]);
   const [loading, setLoading] = useState(true);

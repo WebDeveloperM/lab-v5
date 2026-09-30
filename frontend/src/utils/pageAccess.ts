@@ -1,31 +1,43 @@
 export type NormalizedRole = 'admin' | 'it_center' | 'shift_head' | 'sttl_head' | 'czl_head' | 'dispatcher' | 'user';
 
-// These four roles all share the same page/feature access defaults below —
-// they replace the single consolidated laboratory_manager role with per-position labels.
+// These four roles share most page/feature defaults below — they replace the single
+// consolidated laboratory_manager role with per-position labels.
 export const MANAGER_TIER_ROLES: NormalizedRole[] = ['shift_head', 'sttl_head', 'czl_head', 'dispatcher'];
 export const isManagerTierRole = (role: NormalizedRole) => (MANAGER_TIER_ROLES as string[]).includes(role);
 
+// ppe_arrival va statistics — СИЗ davridan qolgan sahifalar: menyudan olib tashlangan,
+// lekin marshrutlari hali tirik, shuning uchun kalitlar saqlanadi (ular «Доступ к страницам»
+// UI-da ko'rsatilmaydi). Qolgan beshtasi — laboratoriya pasport ilovasining haqiqiy bo'limlari.
 export type PageAccess = {
   dashboard: boolean;
   ppe_arrival: boolean;
   statistics: boolean;
-  // Паспорта section, kept separate from `settings` on purpose: the passport form lives on
-  // the template page, and Начальник смены needs it without access to all of Настройки.
   passports: boolean;
+  pending_approvals: boolean;
+  spravki: boolean;
   settings: boolean;
 };
 
+// Birinchi beshtasi — СИЗ qoldig'i. Oxirgi beshtasi — pasport oqimining haqiqiy huquqlari;
+// ular ilgari komponentlarda rol nomiga qattiq bog'langan edi.
 export type FeatureAccess = {
   dashboard_due_cards: boolean;
   dashboard_export_excel: boolean;
   dashboard_delete_employee: boolean;
   employee_ppe_tab: boolean;
-  face_id_control: boolean;
   ppe_arrival_intake: boolean;
+  passport_create: boolean;
+  passport_edit: boolean;
+  passport_delete: boolean;
+  spravka_create: boolean;
+  face_id_control: boolean;
 };
 
 const PAGE_ACCESS_STORAGE_KEY = 'page_access';
 const FEATURE_ACCESS_STORAGE_KEY = 'feature_access';
+
+// «На подписи мне» ilgari Sidebar-da qattiq yozilgan edi: admin + СТТЛ/ЦЗЛ/Диспетчер.
+const PENDING_APPROVAL_DEFAULT_ROLES: NormalizedRole[] = ['sttl_head', 'czl_head', 'dispatcher'];
 
 export const normalizeRole = (rawRole: string | null): NormalizedRole => {
   const value = String(rawRole || '').trim().toLowerCase();
@@ -35,151 +47,148 @@ export const normalizeRole = (rawRole: string | null): NormalizedRole => {
   if (value === 'sttl_head' || value === 'начальник сттл') return 'sttl_head';
   if (value === 'czl_head' || value === 'начальник цзл') return 'czl_head';
   if (value === 'dispatcher' || value === 'диспетчер') return 'dispatcher';
+  // Админ qo'shgan custom rollar shu yerga tushadi: ular rol nomiga bog'langan hech qanday
+  // imtiyoz olmaydi — huquqlari faqat serverdan kelgan page_access/feature_access bilan belgilanadi.
   return 'user';
 };
 
 export const getDefaultPageAccess = (role: NormalizedRole): PageAccess => {
-  if (role === 'admin' || role === 'it_center') {
-    return {
-      dashboard: true,
-      ppe_arrival: true,
-      statistics: true,
-      passports: true,
-      settings: true,
-    };
-  }
-
-  if (isManagerTierRole(role)) {
-    return {
-      dashboard: true,
-      ppe_arrival: true,
-      statistics: true,
-      passports: true,
-      settings: true,
-    };
-  }
-
-  // `passports` defaults to true for every role — the section used to be shown to all
-  // authenticated users, so defaulting it off would silently take it away.
-  return {
+  // passports va spravki hamma joyda true: bu ikki bo'lim ilgari har qanday
+  // autentifikatsiyalangan rolga ochiq edi, false qilish ularni jimgina yopib qo'yardi.
+  const minimal: PageAccess = {
     dashboard: true,
     ppe_arrival: false,
     statistics: false,
     passports: true,
+    pending_approvals: false,
+    spravki: true,
     settings: false,
   };
-};
 
-export const normalizePageAccess = (rawPageAccess: any, role: NormalizedRole): PageAccess => {
-  const defaults = getDefaultPageAccess(role);
-  if (!rawPageAccess || typeof rawPageAccess !== 'object') {
-    return defaults;
+  const privileged = role === 'admin' || role === 'it_center' || isManagerTierRole(role);
+  if (!privileged) {
+    return minimal;
   }
 
   return {
-    dashboard: typeof rawPageAccess.dashboard === 'boolean' ? rawPageAccess.dashboard : defaults.dashboard,
-    ppe_arrival: typeof rawPageAccess.ppe_arrival === 'boolean' ? rawPageAccess.ppe_arrival : defaults.ppe_arrival,
-    statistics: typeof rawPageAccess.statistics === 'boolean' ? rawPageAccess.statistics : defaults.statistics,
-    passports: typeof rawPageAccess.passports === 'boolean' ? rawPageAccess.passports : defaults.passports,
-    settings: typeof rawPageAccess.settings === 'boolean' ? rawPageAccess.settings : defaults.settings,
+    dashboard: true,
+    ppe_arrival: true,
+    statistics: true,
+    passports: true,
+    pending_approvals: role === 'admin' || PENDING_APPROVAL_DEFAULT_ROLES.includes(role),
+    spravki: true,
+    settings: true,
   };
 };
 
 export const getDefaultFeatureAccess = (role: NormalizedRole): FeatureAccess => {
+  // Паспортni tahrirlash ilgari "role !== user" sharti edi.
+  const minimal: FeatureAccess = {
+    dashboard_due_cards: true,
+    dashboard_export_excel: true,
+    dashboard_delete_employee: false,
+    employee_ppe_tab: true,
+    ppe_arrival_intake: false,
+    passport_create: false,
+    passport_edit: false,
+    passport_delete: false,
+    spravka_create: false,
+    face_id_control: false,
+  };
+
   if (role === 'admin') {
     return {
       dashboard_due_cards: true,
       dashboard_export_excel: true,
       dashboard_delete_employee: true,
       employee_ppe_tab: true,
-      face_id_control: true,
       ppe_arrival_intake: true,
+      passport_create: true,
+      passport_edit: true,
+      passport_delete: true,
+      spravka_create: true,
+      face_id_control: true,
     };
   }
 
   if (role === 'it_center') {
     return {
-      dashboard_due_cards: true,
-      dashboard_export_excel: true,
+      ...minimal,
       dashboard_delete_employee: true,
-      employee_ppe_tab: true,
-      face_id_control: false,
       ppe_arrival_intake: true,
+      passport_edit: true,
     };
   }
 
   if (isManagerTierRole(role)) {
+    const isShiftHead = role === 'shift_head';
     return {
-      dashboard_due_cards: true,
-      dashboard_export_excel: true,
-      dashboard_delete_employee: false,
-      employee_ppe_tab: true,
-      face_id_control: true,
+      ...minimal,
       ppe_arrival_intake: true,
+      passport_create: isShiftHead,
+      passport_edit: true,
+      spravka_create: isShiftHead,
+      face_id_control: true,
     };
   }
 
-  return {
-    dashboard_due_cards: true,
-    dashboard_export_excel: true,
-    dashboard_delete_employee: false,
-    employee_ppe_tab: true,
-    face_id_control: false,
-    ppe_arrival_intake: false,
-  };
+  return minimal;
 };
 
-export const normalizeFeatureAccess = (rawFeatureAccess: any, role: NormalizedRole): FeatureAccess => {
-  const defaults = getDefaultFeatureAccess(role);
-  if (!rawFeatureAccess || typeof rawFeatureAccess !== 'object') {
+/**
+ * Serverdan kelgan qiymatni standart bilan birlashtiradi: faqat haqiqiy boolean bo'lgan
+ * kalitlar olinadi, qolgani standartda qoladi. Shu tufayli backend yangi kalit qo'shganda
+ * eski frontend sinmaydi va aksincha.
+ */
+const mergeAccess = <T extends Record<string, boolean>>(raw: any, defaults: T): T => {
+  if (!raw || typeof raw !== 'object') {
     return defaults;
   }
 
-  return {
-    dashboard_due_cards: typeof rawFeatureAccess.dashboard_due_cards === 'boolean' ? rawFeatureAccess.dashboard_due_cards : defaults.dashboard_due_cards,
-    dashboard_export_excel: typeof rawFeatureAccess.dashboard_export_excel === 'boolean' ? rawFeatureAccess.dashboard_export_excel : defaults.dashboard_export_excel,
-    dashboard_delete_employee: typeof rawFeatureAccess.dashboard_delete_employee === 'boolean' ? rawFeatureAccess.dashboard_delete_employee : defaults.dashboard_delete_employee,
-    employee_ppe_tab: typeof rawFeatureAccess.employee_ppe_tab === 'boolean' ? rawFeatureAccess.employee_ppe_tab : defaults.employee_ppe_tab,
-    face_id_control: typeof rawFeatureAccess.face_id_control === 'boolean' ? rawFeatureAccess.face_id_control : defaults.face_id_control,
-    ppe_arrival_intake: typeof rawFeatureAccess.ppe_arrival_intake === 'boolean' ? rawFeatureAccess.ppe_arrival_intake : defaults.ppe_arrival_intake,
-  };
+  const merged = { ...defaults };
+  (Object.keys(defaults) as Array<keyof T>).forEach((key) => {
+    const value = raw[key as string];
+    if (typeof value === 'boolean') {
+      merged[key] = value as T[keyof T];
+    }
+  });
+  return merged;
 };
 
-export const getStoredPageAccess = (role?: NormalizedRole): PageAccess => {
-  const resolvedRole = role || normalizeRole(localStorage.getItem('role'));
-  const defaults = getDefaultPageAccess(resolvedRole);
-  const rawValue = localStorage.getItem(PAGE_ACCESS_STORAGE_KEY);
+export const normalizePageAccess = (rawPageAccess: any, role: NormalizedRole): PageAccess =>
+  mergeAccess(rawPageAccess, getDefaultPageAccess(role));
+
+export const normalizeFeatureAccess = (rawFeatureAccess: any, role: NormalizedRole): FeatureAccess =>
+  mergeAccess(rawFeatureAccess, getDefaultFeatureAccess(role));
+
+const readStored = <T extends Record<string, boolean>>(storageKey: string, defaults: T): T => {
+  let rawValue: string | null = null;
+  try {
+    rawValue = localStorage.getItem(storageKey);
+  } catch {
+    return defaults;
+  }
 
   if (!rawValue) {
     return defaults;
   }
 
   try {
-    return normalizePageAccess(JSON.parse(rawValue), resolvedRole);
+    return mergeAccess(JSON.parse(rawValue), defaults);
   } catch {
     return defaults;
   }
 };
+
+export const getStoredPageAccess = (role?: NormalizedRole): PageAccess =>
+  readStored(PAGE_ACCESS_STORAGE_KEY, getDefaultPageAccess(role || normalizeRole(localStorage.getItem('role'))));
 
 export const storePageAccess = (pageAccess: PageAccess) => {
   localStorage.setItem(PAGE_ACCESS_STORAGE_KEY, JSON.stringify(pageAccess));
 };
 
-export const getStoredFeatureAccess = (role?: NormalizedRole): FeatureAccess => {
-  const resolvedRole = role || normalizeRole(localStorage.getItem('role'));
-  const defaults = getDefaultFeatureAccess(resolvedRole);
-  const rawValue = localStorage.getItem(FEATURE_ACCESS_STORAGE_KEY);
-
-  if (!rawValue) {
-    return defaults;
-  }
-
-  try {
-    return normalizeFeatureAccess(JSON.parse(rawValue), resolvedRole);
-  } catch {
-    return defaults;
-  }
-};
+export const getStoredFeatureAccess = (role?: NormalizedRole): FeatureAccess =>
+  readStored(FEATURE_ACCESS_STORAGE_KEY, getDefaultFeatureAccess(role || normalizeRole(localStorage.getItem('role'))));
 
 export const storeFeatureAccess = (featureAccess: FeatureAccess) => {
   localStorage.setItem(FEATURE_ACCESS_STORAGE_KEY, JSON.stringify(featureAccess));
@@ -190,11 +199,14 @@ export const clearStoredPageAccess = () => {
   localStorage.removeItem(FEATURE_ACCESS_STORAGE_KEY);
 };
 
+// Sidebar tartibiga mos: foydalanuvchi kira oladigan birinchi bo'lim.
 export const getFirstAccessibleRoute = (pageAccess: PageAccess) => {
   if (pageAccess.dashboard) return '/';
+  if (pageAccess.passports) return '/pasporta';
+  if (pageAccess.pending_approvals) return '/pasporta/pending-approvals';
+  if (pageAccess.spravki) return '/spravki';
   if (pageAccess.ppe_arrival) return '/ppe-arrival';
   if (pageAccess.statistics) return '/statistics';
-  if (pageAccess.passports) return '/pasporta';
   if (pageAccess.settings) return '/nastroyka';
   return null;
 };

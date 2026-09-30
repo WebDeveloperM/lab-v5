@@ -7,7 +7,7 @@ import { toast } from 'react-toastify';
 import Breadcrumb from '../../components/Breadcrumbs/Breadcrumb';
 import axioss from '../../api/axios';
 import PassportViewDrawer from '../../components/Passport/PassportViewDrawer';
-import { normalizeRole } from '../../utils/pageAccess';
+import { getStoredFeatureAccess } from '../../utils/pageAccess';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -73,10 +73,12 @@ const STATUS_BADGE_CLS: Record<string, string> = {
 
 export default function PasportaPage() {
   const navigate = useNavigate();
-  const role = useMemo(() => normalizeRole(localStorage.getItem('role')), []);
-  const canCreatePassport = role === 'admin' || role === 'shift_head';
-  const canDeletePassport = role === 'admin';
-  const canEditPassport = role !== 'user';
+  // Huquqlar «Настройки -> Доступ к страницам» dan keladi; server ham aynan shu
+  // feature kalitlarini PassportListCreateView/PassportDetailView da tekshiradi.
+  const featureAccess = useMemo(() => getStoredFeatureAccess(), []);
+  const canCreatePassport = featureAccess.passport_create;
+  const canDeletePassport = featureAccess.passport_delete;
+  const canEditPassport = featureAccess.passport_edit;
 
   const [list, setList] = useState<PassportItem[]>([]);
   const [loading, setLoading] = useState(true);

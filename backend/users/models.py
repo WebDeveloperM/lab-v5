@@ -137,52 +137,75 @@ def get_effective_user_role(user):
     return profile.role if is_known_role(profile.role) else UserRole.USER
 
 
+# 'ppe_arrival' va 'statistics' — СИЗ davridan qolgan sahifalar. Menyudan olib
+# tashlangan, lekin marshrutlari va endpointlari hali tirik, shuning uchun kalitlar
+# javobda qoldirilgan (ular faqat «Доступ к страницам» UI'da ko'rsatilmaydi).
 ROLE_PAGE_ACCESS_FIELD_MAP = {
     'dashboard': 'can_view_dashboard',
     'ppe_arrival': 'can_view_ppe_arrival',
     'statistics': 'can_view_statistics',
     'passports': 'can_view_passports',
+    'pending_approvals': 'can_view_pending_approvals',
+    'spravki': 'can_view_spravki',
     'settings': 'can_view_settings',
 }
 
+# Birinchi beshtasi — СИЗ qoldig'i (UI'da ko'rsatilmaydi, endpointlar uchun qoldirilgan).
+# Oxirgi to'rttasi + face_id_control — laboratoriya pasport oqimining haqiqiy huquqlari.
 ROLE_FEATURE_ACCESS_FIELD_MAP = {
     'dashboard_due_cards': 'can_view_dashboard_due_cards',
     'dashboard_export_excel': 'can_export_dashboard_excel',
     'dashboard_delete_employee': 'can_delete_employee',
     'employee_ppe_tab': 'can_view_employee_ppe_tab',
-    'face_id_control': 'can_manage_face_id_control',
     'ppe_arrival_intake': 'can_submit_ppe_arrival',
+    'passport_create': 'can_create_passport',
+    'passport_edit': 'can_edit_passport',
+    'passport_delete': 'can_delete_passport',
+    'spravka_create': 'can_create_spravka',
+    'face_id_control': 'can_manage_face_id_control',
 }
+
+
+# «На подписи мне» ilgari Sidebar da qattiq yozilgan edi: admin + СТТЛ/ЦЗЛ/Диспетчер.
+# Начальник смены va IT Center uni ko'rmasdi — quyidagi standartlar shu xulqni aynan saqlaydi.
+PENDING_APPROVAL_DEFAULT_ROLES = (UserRole.STTL_HEAD, UserRole.CZL_HEAD, UserRole.DISPATCHER)
+
+# Паспорт/справка yaratish ilgari admin + Начальник смены bilan cheklangan edi
+# (PassportListCreateView, SpravkaListCreateView, PasportaPage.tsx).
+PASSPORT_CREATE_DEFAULT_ROLES = (UserRole.ADMIN, UserRole.SHIFT_HEAD)
 
 
 def get_default_page_access(role):
     normalized_role = str(role or UserRole.USER).strip().lower()
 
-    # 'passports' defaults to True everywhere: the Паспорта section used to be shown to every
-    # authenticated role unconditionally, so anything else would silently take it away.
+    # 'passports' va 'spravki' hamma joyda True: bu ikki bo'lim ilgari har qanday
+    # autentifikatsiyalangan rolga ochiq edi, standartni False qilish ularni jimgina
+    # yopib qo'yardi. Yangi (custom) rol ham shu standartni oladi.
     defaults = {
         'dashboard': True,
         'ppe_arrival': False,
         'statistics': False,
         'passports': True,
+        'pending_approvals': False,
+        'spravki': True,
         'settings': False,
     }
 
-    if normalized_role in [UserRole.ADMIN, UserRole.IT_CENTER]:
+    privileged = (
+        normalized_role in [UserRole.ADMIN, UserRole.IT_CENTER]
+        or normalized_role in UserRole.MANAGER_TIER_ROLES
+    )
+    if privileged:
         return {
             'dashboard': True,
             'ppe_arrival': True,
             'statistics': True,
             'passports': True,
-            'settings': True,
-        }
-
-    if normalized_role in UserRole.MANAGER_TIER_ROLES:
-        return {
-            'dashboard': True,
-            'ppe_arrival': True,
-            'statistics': True,
-            'passports': True,
+            'pending_approvals': (
+                normalized_role == UserRole.ADMIN
+                or normalized_role in PENDING_APPROVAL_DEFAULT_ROLES
+            ),
+            'spravki': True,
             'settings': True,
         }
 
@@ -192,24 +215,24 @@ def get_default_page_access(role):
 def get_default_feature_access(role):
     normalized_role = str(role or UserRole.USER).strip().lower()
 
+    # Паспортни tahrirlash ilgari PasportaPage.tsx da `role !== 'user'` edi, ya'ni
+    # «Обычный пользователь» dan boshqa hammaga ochiq. Yangi custom rol esa eng kam
+    # huquq bilan boshlanadi, shuning uchun bu yerda ham False.
     defaults = {
         'dashboard_due_cards': True,
         'dashboard_export_excel': True,
         'dashboard_delete_employee': False,
         'employee_ppe_tab': True,
-        'face_id_control': False,
         'ppe_arrival_intake': False,
+        'passport_create': False,
+        'passport_edit': False,
+        'passport_delete': False,
+        'spravka_create': False,
+        'face_id_control': False,
     }
 
     if normalized_role == UserRole.ADMIN:
-        return {
-            'dashboard_due_cards': True,
-            'dashboard_export_excel': True,
-            'dashboard_delete_employee': True,
-            'employee_ppe_tab': True,
-            'face_id_control': True,
-            'ppe_arrival_intake': True,
-        }
+        return {key: True for key in defaults}
 
     if normalized_role == UserRole.IT_CENTER:
         return {
@@ -217,18 +240,27 @@ def get_default_feature_access(role):
             'dashboard_export_excel': True,
             'dashboard_delete_employee': True,
             'employee_ppe_tab': True,
-            'face_id_control': False,
             'ppe_arrival_intake': True,
+            'passport_create': False,
+            'passport_edit': True,
+            'passport_delete': False,
+            'spravka_create': False,
+            'face_id_control': False,
         }
 
     if normalized_role in UserRole.MANAGER_TIER_ROLES:
+        is_shift_head = normalized_role == UserRole.SHIFT_HEAD
         return {
             'dashboard_due_cards': True,
             'dashboard_export_excel': True,
             'dashboard_delete_employee': False,
             'employee_ppe_tab': True,
-            'face_id_control': True,
             'ppe_arrival_intake': True,
+            'passport_create': is_shift_head,
+            'passport_edit': True,
+            'passport_delete': False,
+            'spravka_create': is_shift_head,
+            'face_id_control': True,
         }
 
     return defaults
@@ -240,6 +272,8 @@ class RolePageAccess(models.Model):
     can_view_ppe_arrival = models.BooleanField(default=False)
     can_view_statistics = models.BooleanField(default=False)
     can_view_passports = models.BooleanField(default=True)
+    can_view_pending_approvals = models.BooleanField(default=False)
+    can_view_spravki = models.BooleanField(default=True)
     can_view_settings = models.BooleanField(default=False)
     can_view_dashboard_due_cards = models.BooleanField(default=True)
     can_add_employee = models.BooleanField(default=False)
@@ -249,6 +283,10 @@ class RolePageAccess(models.Model):
     can_view_employee_ppe_tab = models.BooleanField(default=True)
     can_manage_face_id_control = models.BooleanField(default=False)
     can_submit_ppe_arrival = models.BooleanField(default=False)
+    can_create_passport = models.BooleanField(default=False)
+    can_edit_passport = models.BooleanField(default=False)
+    can_delete_passport = models.BooleanField(default=False)
+    can_create_spravka = models.BooleanField(default=False)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

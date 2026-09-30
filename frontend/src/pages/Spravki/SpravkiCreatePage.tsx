@@ -6,7 +6,7 @@ import Breadcrumb from '../../components/Breadcrumbs/Breadcrumb';
 import axioss from '../../api/axios';
 import { BASE_URL } from '../../utils/urls';
 import { spravkaTemplates } from './templates';
-import { normalizeRole } from '../../utils/pageAccess';
+import { getStoredFeatureAccess, normalizeRole } from '../../utils/pageAccess';
 import { inputLine } from './templates/shared/styles';
 import type { AV, Person } from './templates/shared/types';
 
@@ -28,8 +28,9 @@ export default function SpravkiCreatePage() {
   // Yangi spravkani faqat smena boshlig'i (va admin) yarata oladi — SpravkaListCreateView
   // dagi tekshiruv bilan bir xil. Tahrirlash (?id=...) bundan mustasno: unga
   // «Обычный пользователь» dan boshqa barcha rollar kira oladi.
+  const canCreateSpravka = getStoredFeatureAccess().spravka_create;
+  // Huquq emas: Начальник смены o'z nomidan yaratganda ismi avtomatik qo'yiladi.
   const role = normalizeRole(localStorage.getItem('role'));
-  const canCreateSpravka = role === 'admin' || role === 'shift_head';
   const creationBlocked = !editId && !canCreateSpravka;
 
   useEffect(() => {

@@ -105,6 +105,9 @@ class RolePageAccessSettingsTests(APITestCase):
 				'dashboard': True,
 				'ppe_arrival': False,
 				'statistics': True,
+				'passports': True,
+				'pending_approvals': False,
+				'spravki': True,
 				'settings': False,
 			},
 		)
@@ -115,8 +118,12 @@ class RolePageAccessSettingsTests(APITestCase):
 				'dashboard_export_excel': False,
 				'dashboard_delete_employee': False,
 				'employee_ppe_tab': False,
-				'face_id_control': True,
 				'ppe_arrival_intake': True,
+				'passport_create': False,
+				'passport_edit': False,
+				'passport_delete': False,
+				'spravka_create': False,
+				'face_id_control': True,
 			},
 		)
 
@@ -137,6 +144,9 @@ class RolePageAccessSettingsTests(APITestCase):
 				'dashboard': True,
 				'ppe_arrival': True,
 				'statistics': True,
+				'passports': True,
+				'pending_approvals': False,
+				'spravki': True,
 				'settings': True,
 			},
 		)
@@ -147,8 +157,12 @@ class RolePageAccessSettingsTests(APITestCase):
 				'dashboard_export_excel': True,
 				'dashboard_delete_employee': True,
 				'employee_ppe_tab': True,
-				'face_id_control': False,
 				'ppe_arrival_intake': True,
+				'passport_create': False,
+				'passport_edit': True,
+				'passport_delete': False,
+				'spravka_create': False,
+				'face_id_control': False,
 			},
 		)
 		self.assertEqual(

@@ -29,7 +29,7 @@ from .approval import (
     can_user_submit_spravka, resolve_next_spravka_status,
 )
 from base.views import ensure_can_modify
-from users.models import UserRole, get_effective_user_role
+from users.models import UserRole, get_effective_user_role, user_has_feature_access
 
 
 # ─── Spravka ──────────────────────────────────────────────────────────────────
@@ -43,11 +43,10 @@ class SpravkaListCreateView(generics.ListCreateAPIView):
         return SpravkaListSerializer
 
     def create(self, request, *args, **kwargs):
-        # Mirrors `canCreateSpravka` in SpravkiPage.tsx — Админ and Начальник смены only,
-        # same rule as PassportListCreateView. Enforced here because hiding the
-        # "Добавить справку" button was the only thing keeping other roles out.
-        # GET is deliberately left open: every authenticated role may read the list.
-        if get_effective_user_role(request.user) not in (UserRole.ADMIN, UserRole.SHIFT_HEAD):
+        # Huquq «Настройки -> Доступ к страницам» dan boshqariladi (feature: spravka_create).
+        # Standart qiymatlar eski qoidani saqlaydi: Админ va Начальник смены.
+        # GET ataylab ochiq: ro'yxatni har qanday autentifikatsiyalangan rol o'qiy oladi.
+        if not user_has_feature_access(request.user, 'spravka_create'):
             return Response(
                 {"error": "Создавать справку может только начальник смены."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -433,11 +432,10 @@ class PassportListCreateView(generics.ListCreateAPIView):
         return PassportListSerializer
 
     def create(self, request, *args, **kwargs):
-        # Mirrors `canCreatePassport` in PasportaPage.tsx — Админ and Начальник смены only.
-        # Enforced here because neither this endpoint nor the /pasporta/create route carried
-        # a role check, so hiding the button was the only thing keeping other roles out.
-        # GET is deliberately left open: every authenticated role may read the passport list.
-        if get_effective_user_role(request.user) not in (UserRole.ADMIN, UserRole.SHIFT_HEAD):
+        # Huquq «Настройки -> Доступ к страницам» dan boshqariladi (feature: passport_create).
+        # Standart qiymatlar eski qoidani saqlaydi: Админ va Начальник смены.
+        # GET ataylab ochiq: ro'yxatni har qanday autentifikatsiyalangan rol o'qiy oladi.
+        if not user_has_feature_access(request.user, 'passport_create'):
             return Response(
                 {"error": "У вас нет прав на создание паспорта."},
                 status=status.HTTP_403_FORBIDDEN,
@@ -456,6 +454,14 @@ class PassportDetailView(generics.RetrieveUpdateDestroyAPIView):
         return PassportDetailSerializer
 
     def update(self, request, *args, **kwargs):
+        # Ilgari bu yerda rol tekshiruvi UMUMAN yo'q edi — «Tahrirlash» tugmasini
+        # PasportaPage.tsx yashirardi, xolos, ya'ni PATCH ni istalgan rol yubora olardi.
+        # feature: passport_edit — standart bo'yicha «Обычный пользователь» dan boshqa hamma.
+        if not user_has_feature_access(request.user, 'passport_edit'):
+            return Response(
+                {"error": "У вас нет прав на редактирование паспорта."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         instance = self.get_object()
         if instance.is_locked:
             return Response(
@@ -465,8 +471,8 @@ class PassportDetailView(generics.RetrieveUpdateDestroyAPIView):
         return super().update(request, *args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
-        role = get_effective_user_role(request.user)
-        if role != UserRole.ADMIN:
+        # feature: passport_delete — standart bo'yicha faqat Админ.
+        if not user_has_feature_access(request.user, 'passport_delete'):
             return Response(
                 {"error": "У вас нет прав на удаление паспорта."},
                 status=status.HTTP_403_FORBIDDEN,
