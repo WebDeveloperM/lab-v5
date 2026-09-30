@@ -44,9 +44,18 @@ type DeleteCandidate = {
   username: string;
 };
 
+type RoleOption = {
+  key: string;
+  label: string;
+  is_custom: boolean;
+  assigned_count: number;
+};
+
 const USERS_PAGE_SIZE = 50;
 const EMPLOYEE_PAGE_SIZE = 50;
 
+// Faqat ZAXIRA yorliqlar: asosiy ro'yxat /users/settings-roles/ dan keladi va unda
+// админ qo'shgan custom rollar ham bo'ladi. Ro'yxat yuklanmaguncha shular ishlatiladi.
 const ROLE_LABELS: Record<string, string> = {
   user: 'Пользователь',
   it_center: 'IT Center',
@@ -174,7 +183,35 @@ const UserPage = () => {
   const [generatedCredentials, setGeneratedCredentials] = useState<GeneratedCredentials | null>(null);
   const [deleteCandidate, setDeleteCandidate] = useState<DeleteCandidate | null>(null);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [roles, setRoles] = useState<RoleOption[]>([]);
+  const [isRoleFormOpen, setIsRoleFormOpen] = useState(false);
+  const [newRoleLabel, setNewRoleLabel] = useState('');
+  const [newRoleKey, setNewRoleKey] = useState('');
+  const [isRoleSaving, setIsRoleSaving] = useState(false);
   const employeeDropdownRef = useRef<HTMLDivElement | null>(null);
+
+  const loadRoles = async () => {
+    try {
+      const response = await axioss.get('/users/settings-roles/');
+      setRoles(Array.isArray(response.data) ? response.data : []);
+    } catch {
+      // Ro'yxat kelmasa quyidagi roleLabelOf ROLE_LABELS zaxirasiga tushadi,
+      // select esa mavjud 7 ta tizim roli bilan ishlayveradi.
+      setRoles([]);
+    }
+  };
+
+  const roleOptions: RoleOption[] = roles.length
+    ? roles
+    : Object.entries(ROLE_LABELS).map(([key, label]) => ({
+        key,
+        label,
+        is_custom: false,
+        assigned_count: 0,
+      }));
+
+  const roleLabelOf = (key: string) =>
+    roles.find((item) => item.key === key)?.label || ROLE_LABELS[key] || key;
 
   const loadUsers = async (page = 1, search = usersSearch) => {
     setLoading(true);
@@ -245,6 +282,7 @@ const UserPage = () => {
       setLoading(false);
       return;
     }
+    loadRoles();
     loadUsers(1, '');
   }, [isAdmin]);
 
@@ -290,6 +328,9 @@ const UserPage = () => {
     setEmployeeSearch('');
     setEmployeeDropdownOpen(false);
     setEmployeeSource(null);
+    setIsRoleFormOpen(false);
+    setNewRoleLabel('');
+    setNewRoleKey('');
   };
 
   const closeUserModal = () => {
@@ -300,6 +341,33 @@ const UserPage = () => {
   const openCreateUserModal = () => {
     resetUserForm();
     setIsUserModalOpen(true);
+  };
+
+  const handleCreateRole = async () => {
+    const label = newRoleLabel.trim();
+    if (!label) {
+      toast.error('Укажите название роли');
+      return;
+    }
+
+    setIsRoleSaving(true);
+    try {
+      const response = await axioss.post('/users/settings-roles/', {
+        label,
+        key: newRoleKey.trim() || undefined,
+      });
+      await loadRoles();
+      // Yangi rol darhol tanlangan bo'lsin — admin uni qo'lda qidirmasin.
+      setUserRole(String(response.data?.key || ''));
+      setIsRoleFormOpen(false);
+      setNewRoleLabel('');
+      setNewRoleKey('');
+      toast.success('Роль создана. Права откройте в «Доступ к страницам».');
+    } catch (error) {
+      toast.error(getBackendError(error, 'Не удалось создать роль'));
+    } finally {
+      setIsRoleSaving(false);
+    }
   };
 
   const handleCreateOrUpdateUser = async (event: FormEvent) => {
@@ -579,7 +647,7 @@ const UserPage = () => {
                           {employee?.tabel_number && <div className="text-xs text-gray-400">Таб. № {employee.tabel_number}</div>}
                         </td>
                         <td className="px-3 py-2 text-gray-500">{displayLogin}</td>
-                        <td className="px-3 py-2">{ROLE_LABELS[item.role] || item.role}</td>
+                        <td className="px-3 py-2">{roleLabelOf(item.role)}</td>
                         <td className="px-3 py-2 text-xs text-gray-500">{employee?.position || '—'}</td>
                         <td className="px-3 py-2">
                           {normalizeBoolean(item.face_id_required, true) ? (
@@ -735,19 +803,82 @@ const UserPage = () => {
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               <div>
                 <label className="mb-1 block text-sm font-medium text-black dark:text-white">Роль</label>
-                <select
-                  value={userRole}
-                  onChange={(event) => setUserRole(event.target.value)}
-                  className="w-full rounded border border-stroke bg-transparent px-3 py-2.5 dark:border-strokedark dark:bg-transparent"
-                >
-                  <option value="user">Пользователь</option>
-                  <option value="it_center">IT Center</option>
-                  <option value="shift_head">Начальник смены</option>
-                  <option value="sttl_head">Начальник СТТЛ</option>
-                  <option value="czl_head">Начальник ЦЗЛ</option>
-                  <option value="dispatcher">Диспетчер</option>
-                  <option value="admin">Администратор</option>
-                </select>
+                <div className="flex items-center gap-2">
+                  <select
+                    value={userRole}
+                    onChange={(event) => setUserRole(event.target.value)}
+                    className="w-full rounded border border-stroke bg-transparent px-3 py-2.5 dark:border-strokedark dark:bg-transparent"
+                  >
+                    {roleOptions.map((item) => (
+                      <option key={item.key} value={item.key}>{item.label}</option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => setIsRoleFormOpen((prev) => !prev)}
+                    title="Добавить роль"
+                    aria-label="Добавить роль"
+                    className="shrink-0 rounded border border-stroke px-3.5 py-2 text-xl leading-none text-primary hover:bg-primary/10 dark:border-strokedark"
+                  >
+                    +
+                  </button>
+                </div>
+                {isRoleFormOpen && (
+                  <div className="mt-2 space-y-2 rounded border border-stroke bg-gray-50 p-3 dark:border-strokedark dark:bg-gray-800">
+                    <input
+                      autoFocus
+                      value={newRoleLabel}
+                      onChange={(event) => setNewRoleLabel(event.target.value)}
+                      onKeyDown={(event) => {
+                        // Bu input tashqi <form id="user-form"> ichida: Enter butun
+                        // foydalanuvchi formasini yuborib yuborardi.
+                        if (event.key === 'Enter') {
+                          event.preventDefault();
+                          handleCreateRole();
+                        }
+                      }}
+                      placeholder="Название роли, напр. «Лаборант»"
+                      className="w-full rounded border border-stroke bg-transparent px-3 py-2 text-sm dark:border-strokedark"
+                    />
+                    <input
+                      value={newRoleKey}
+                      onChange={(event) => setNewRoleKey(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          event.preventDefault();
+                          handleCreateRole();
+                        }
+                      }}
+                      placeholder="Ключ — необязательно, напр. laborant"
+                      className="w-full rounded border border-stroke bg-transparent px-3 py-2 text-sm dark:border-strokedark"
+                    />
+                    <p className="text-xs text-bodydark2">
+                      Новая роль создаётся с минимальными правами: «Главная страница» и «Паспорта».
+                      Остальное откройте в «Настройки → Доступ к страницам».
+                    </p>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={handleCreateRole}
+                        disabled={isRoleSaving}
+                        className="rounded bg-primary px-3 py-1.5 text-sm text-white disabled:opacity-60"
+                      >
+                        {isRoleSaving ? 'Сохранение...' : 'Создать'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsRoleFormOpen(false);
+                          setNewRoleLabel('');
+                          setNewRoleKey('');
+                        }}
+                        className="rounded border border-stroke px-3 py-1.5 text-sm dark:border-strokedark"
+                      >
+                        Отмена
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="flex items-end pb-1">
                 <label className="flex cursor-pointer items-center gap-3">

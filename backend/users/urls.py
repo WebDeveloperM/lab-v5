@@ -2,6 +2,7 @@
 from django.urls import path
 from .views import BnpzIdAccessCheckAPIView, BnpzIdLoginAPIView, FaceIdLoginAPIView, LoginAPIView, UserInfoView, TokenStatusAPIView, RegisterAPIView
 from .views import RolePageAccessSettingsAPIView, SettingsUsersListCreateAPIView, SettingsUsersDetailAPIView
+from .views import SettingsRolesAPIView, SettingsRoleDetailAPIView
 from .views import EmployeeListProxyAPIView, SyncEmployeeRoleAPIView
 
 urlpatterns = [
@@ -14,6 +15,8 @@ urlpatterns = [
     path('settings-users/sync-role/', SyncEmployeeRoleAPIView.as_view()),
     path('settings-users/<int:pk>/', SettingsUsersDetailAPIView.as_view()),
     path('settings-users/<int:pk>/reset-password/', SettingsUsersDetailAPIView.as_view()),
+    path('settings-roles/', SettingsRolesAPIView.as_view()),
+    path('settings-roles/<slug:key>/', SettingsRoleDetailAPIView.as_view()),
     path('page-access-settings/', RolePageAccessSettingsAPIView.as_view()),
     path('employees-list/', EmployeeListProxyAPIView.as_view()),
     path('user/', UserInfoView.as_view(), name='user-info'),

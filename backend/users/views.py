@@ -2,6 +2,7 @@ from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
 from django.db import transaction
+from django.db.models import Count
 from django.core.files.base import ContentFile
 from django.shortcuts import get_object_or_404
 from django.utils.text import slugify
@@ -23,9 +24,14 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from transliterate import translit
 from .models import (
+    BUILTIN_ROLE_KEYS,
+    CustomRole,
     CustomToken,
+    RolePageAccess,
     ROLE_FEATURE_ACCESS_FIELD_MAP,
     ROLE_PAGE_ACCESS_FIELD_MAP,
+    get_all_role_choices,
+    get_all_role_keys,
     get_effective_user_role,
     get_feature_access_for_role,
     get_page_access_for_role,
@@ -905,7 +911,7 @@ def serialize_role_page_access(role):
     role_key = str(role).strip().lower()
     page_access = get_page_access_for_role(role_key)
     feature_access = get_feature_access_for_role(role_key)
-    role_labels = dict(UserRole.ROLE_CHOICES)
+    role_labels = dict(get_all_role_choices())
     return {
         "role": role_key,
         "role_label": role_labels.get(role_key, role_key),
@@ -969,7 +975,7 @@ class SettingsUsersListCreateAPIView(APIView):
         if not employee_slug:
             return Response({"error": "Выберите сотрудника."}, status=status.HTTP_400_BAD_REQUEST)
 
-        if role not in [UserRole.ADMIN, UserRole.IT_CENTER, *UserRole.MANAGER_TIER_ROLES, UserRole.USER]:
+        if role not in get_all_role_keys():
             return Response({"error": "Недопустимая роль."}, status=status.HTTP_400_BAD_REQUEST)
         if role == UserRole.ADMIN and not request.user.is_superuser:
             return Response({"error": "Только суперпользователь может создать администратора."}, status=status.HTTP_403_FORBIDDEN)
@@ -1035,7 +1041,7 @@ class SyncEmployeeRoleAPIView(APIView):
         role = str(request.data.get('role', '')).strip().lower()
         if not employee_slug or not role:
             return Response({"error": "employee_slug и role обязательны."}, status=status.HTTP_400_BAD_REQUEST)
-        if role not in [choice[0] for choice in UserRole.ROLE_CHOICES]:
+        if role not in get_all_role_keys():
             return Response({"error": "Недопустимая роль."}, status=status.HTTP_400_BAD_REQUEST)
 
         profile = UserRole.objects.filter(employee_slug=employee_slug).first()
@@ -1059,7 +1065,7 @@ class RolePageAccessSettingsAPIView(APIView):
 
         role_entries = [
             serialize_role_page_access(role_value)
-            for role_value, _ in UserRole.ROLE_CHOICES
+            for role_value, _ in get_all_role_choices()
         ]
         return Response(role_entries, status=status.HTTP_200_OK)
 
@@ -1073,7 +1079,7 @@ class RolePageAccessSettingsAPIView(APIView):
         pages = request.data.get('pages') or {}
         features = request.data.get('features') or {}
 
-        if role not in [choice[0] for choice in UserRole.ROLE_CHOICES]:
+        if role not in get_all_role_keys():
             return Response({"error": "Недопустимая роль."}, status=status.HTTP_400_BAD_REQUEST)
 
         if role == UserRole.ADMIN:
@@ -1109,6 +1115,117 @@ class RolePageAccessSettingsAPIView(APIView):
 
         return Response(serialize_role_page_access(role), status=status.HTTP_200_OK)
 
+
+ROLE_KEY_PATTERN = re.compile(r'^[a-z][a-z0-9_]{1,31}$')
+
+
+def build_custom_role_key(raw_key, label):
+    """Kalit berilmasa nomdan hosil qilinadi: «Лаборант» -> «laborant»."""
+    candidate = str(raw_key or '').strip().lower().replace('-', '_')
+    if not candidate:
+        candidate = normalize_username_piece(label)
+    return candidate[:32]
+
+
+def validate_custom_role_key(key):
+    if not ROLE_KEY_PATTERN.match(key or ''):
+        raise ValueError(
+            'Ключ роли: латиница в нижнем регистре, цифры и «_», от 2 до 32 символов, '
+            'начинается с буквы.'
+        )
+    if key in BUILTIN_ROLE_KEYS:
+        raise ValueError('Роль с таким ключом уже есть в системе.')
+    return key
+
+
+class SettingsRolesAPIView(APIView):
+    """Rollar katalogi: 7 ta tizim roli + админ qo'shgan custom rollar."""
+
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    @staticmethod
+    def get(request, *args, **kwargs):
+        permission_error = ensure_admin(request)
+        if permission_error:
+            return permission_error
+
+        custom_keys = set(CustomRole.objects.values_list('key', flat=True))
+        assigned = {
+            row['role']: row['total']
+            for row in UserRole.objects.values('role').annotate(total=Count('role'))
+        }
+        return Response([
+            {
+                'key': key,
+                'label': label,
+                'is_custom': key in custom_keys,
+                'assigned_count': assigned.get(key, 0),
+            }
+            for key, label in get_all_role_choices()
+        ], status=status.HTTP_200_OK)
+
+    @staticmethod
+    def post(request, *args, **kwargs):
+        permission_error = ensure_admin(request)
+        if permission_error:
+            return permission_error
+
+        label = ' '.join(str(request.data.get('label', '')).split())
+        if not label:
+            return Response({'error': 'Укажите название роли.'}, status=status.HTTP_400_BAD_REQUEST)
+        if len(label) > 64:
+            return Response({'error': 'Название роли не длиннее 64 символов.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            key = validate_custom_role_key(build_custom_role_key(request.data.get('key'), label))
+        except ValueError as exc:
+            return Response({'error': str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+        if CustomRole.objects.filter(key=key).exists():
+            return Response({'error': 'Роль с таким ключом уже существует.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        role = CustomRole.objects.create(key=key, label=label)
+        # Yangi rol eng kam huquq bilan boshlanadi (get_default_page_access dagi `defaults`).
+        # Yozuvni darhol yaratamiz — shunda u «Доступ к страницам» sahifasida ko'rinadi
+        # va админ u yerda huquqlarni ochib beradi.
+        get_role_page_access_instance(role.key)
+        return Response(
+            {'key': role.key, 'label': role.label, 'is_custom': True, 'assigned_count': 0},
+            status=status.HTTP_201_CREATED,
+        )
+
+
+class SettingsRoleDetailAPIView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    @staticmethod
+    def delete(request, key, *args, **kwargs):
+        permission_error = ensure_admin(request)
+        if permission_error:
+            return permission_error
+
+        normalized = str(key or '').strip().lower()
+        if normalized in BUILTIN_ROLE_KEYS:
+            return Response({'error': 'Системную роль удалить нельзя.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        role = CustomRole.objects.filter(key=normalized).first()
+        if not role:
+            return Response({'error': 'Роль не найдена.'}, status=status.HTTP_404_NOT_FOUND)
+
+        # Foydalanuvchisi bor rolni o'chirsak, ular jimgina huquqsiz qolardi
+        # (get_effective_user_role noma'lum rolni «user» ga tushiradi) — shuning uchun bloklaymiz.
+        assigned_count = UserRole.objects.filter(role=normalized).count()
+        if assigned_count:
+            return Response(
+                {'error': 'Роль назначена %d пользователю(ям). Сначала смените им роль.' % assigned_count},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        RolePageAccess.objects.filter(role=normalized).delete()
+        role.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 class SettingsUsersDetailAPIView(APIView):
     authentication_classes = [TokenAuthentication]
@@ -1146,7 +1263,7 @@ class SettingsUsersDetailAPIView(APIView):
             user.set_password(validated_password)
 
         if role:
-            if role not in [UserRole.ADMIN, UserRole.IT_CENTER, *UserRole.MANAGER_TIER_ROLES, UserRole.USER]:
+            if role not in get_all_role_keys():
                 return Response({"error": "Недопустимая роль."}, status=status.HTTP_400_BAD_REQUEST)
             if role == UserRole.ADMIN and not request.user.is_superuser:
                 return Response({"error": "Только суперпользователь может назначить роль администратора."}, status=status.HTTP_403_FORBIDDEN)

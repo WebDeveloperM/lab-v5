@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.contrib.auth.forms import UserChangeForm, UserCreationForm
 
-from .models import UserRole
+from .models import CustomRole, UserRole
 
 User = get_user_model()
 
@@ -109,3 +109,10 @@ class UserRoleAdmin(admin.ModelAdmin):
 	list_display = ('user', 'role')
 	list_filter = ('role',)
 	search_fields = ('user__username',)
+
+
+@admin.register(CustomRole)
+class CustomRoleAdmin(admin.ModelAdmin):
+	list_display = ('label', 'key', 'created_at')
+	search_fields = ('label', 'key')
+	readonly_fields = ('created_at', 'updated_at')

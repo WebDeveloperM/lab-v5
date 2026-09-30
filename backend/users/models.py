@@ -60,6 +60,64 @@ class UserRole(models.Model):
         return f"{self.user.username}: {self.role}"
 
 
+class CustomRole(models.Model):
+    """
+    Админ qo'shgan qo'shimcha rol.
+
+    UserRole.ROLE_CHOICES dagi 7 ta rol kodda qattiq yozilgan (ruxsat tekshiruvlari,
+    imzo zanjiri, sidebar) va o'chirilmaydi — bu model faqat ULARGA QO'SHIMCHA katalog.
+
+    Bunday rolning huquqlari FAQAT RolePageAccess orqali (Настройки -> Доступ к страницам)
+    belgilanadi. Kodda rol nomiga bog'langan maxsus imtiyozlar — админ huquqlari,
+    «Начальник смены» ning паспорт/справка yaratishi, MANAGER_TIER_ROLES — custom rolga
+    O'TMAYDI, ya'ni yangi rol doim eng kam huquq bilan boshlanadi va admin uni
+    «Доступ к страницам» sahifasida ochib beradi.
+    """
+
+    key = models.SlugField(max_length=32, unique=True, verbose_name='Ключ роли')
+    label = models.CharField(max_length=64, verbose_name='Название роли')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Дополнительная роль'
+        verbose_name_plural = 'Дополнительные роли'
+        ordering = ['label', 'key']
+
+    def __str__(self):
+        return '%s (%s)' % (self.label, self.key)
+
+
+BUILTIN_ROLE_KEYS = frozenset(choice[0] for choice in UserRole.ROLE_CHOICES)
+
+
+def get_custom_role_choices():
+    return [(item.key, item.label) for item in CustomRole.objects.all()]
+
+
+def get_all_role_choices():
+    """Kodda yozilgan 7 ta rol + admin qo'shgan custom rollar."""
+    return list(UserRole.ROLE_CHOICES) + get_custom_role_choices()
+
+
+def get_all_role_keys():
+    return {key for key, _ in get_all_role_choices()}
+
+
+def get_role_label(role_key):
+    return dict(get_all_role_choices()).get(str(role_key or '').strip().lower(), role_key)
+
+
+def is_known_role(role_key):
+    """Builtin rol bo'lsa DB ga tegmaydi — get_effective_user_role har so'rovda chaqiriladi."""
+    normalized = str(role_key or '').strip().lower()
+    if normalized in BUILTIN_ROLE_KEYS:
+        return True
+    if not normalized:
+        return False
+    return CustomRole.objects.filter(key=normalized).exists()
+
+
 def get_effective_user_role(user):
     if not user or not user.is_authenticated:
         return UserRole.USER
@@ -72,11 +130,11 @@ def get_effective_user_role(user):
         return UserRole.USER
 
     profile = UserRole.objects.filter(user_id=user_id).only('role').first()
-    if profile and profile.role in {choice[0] for choice in UserRole.ROLE_CHOICES}:
+    if profile and is_known_role(profile.role):
         return profile.role
 
     profile, _ = UserRole.objects.get_or_create(user_id=user_id)
-    return profile.role if profile.role in {choice[0] for choice in UserRole.ROLE_CHOICES} else UserRole.USER
+    return profile.role if is_known_role(profile.role) else UserRole.USER
 
 
 ROLE_PAGE_ACCESS_FIELD_MAP = {
