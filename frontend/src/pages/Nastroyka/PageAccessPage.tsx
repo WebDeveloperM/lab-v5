@@ -6,14 +6,11 @@ import axioss from '../../api/axios';
 import { normalizeRole } from '../../utils/pageAccess';
 
 /**
- * Bu sahifa faqat laboratoriya pasport ilovasida HAQIQATAN mavjud bo'lgan bo'limlarni
- * va huquqlarni ko'rsatadi.
+ * Laboratoriya pasport ilovasining bo'limlari va huquqlari.
  *
- * Server javobida СИЗ davridan qolgan kalitlar ham bor (pages: ppe_arrival, statistics;
- * features: dashboard_*, employee_ppe_tab, ppe_arrival_intake). Ular menyudan olib
- * tashlangan, lekin marshrutlari va endpointlari hali tirik, shuning uchun o'chirilmagan —
- * shunchaki ko'rsatilmaydi. PATCH da row.pages / row.features BUTUNLAY yuboriladi,
- * ya'ni ko'rinmaydigan kalitlar o'z qiymatini yo'qotmaydi.
+ * СИЗ (PPE) quyi tizimi loyihadan butunlay olib tashlangan, shuning uchun bu yerda
+ * ham, server javobida ham faqat quyidagi kalitlar bor. PATCH da row.pages /
+ * row.features butunlay yuboriladi — backend esa faqat kelgan kalitlarni yangilaydi.
  */
 
 type AccessFlags = Record<string, boolean>;
@@ -41,7 +38,6 @@ const FEATURE_COLUMNS: ColumnDef[] = [
   { key: 'passport_edit', label: 'Редактирование', hint: 'Изменение паспорта до отправки на подпись' },
   { key: 'passport_delete', label: 'Удаление паспорта', hint: 'Мягкое удаление паспорта' },
   { key: 'spravka_create', label: 'Создание справки', hint: 'Кнопка «Добавить справку» и POST /spravki/' },
-  { key: 'face_id_control', label: 'Face ID', hint: 'Раздел «Face ID настройки»' },
 ];
 
 const getBackendError = (error: any, fallback: string) => {
@@ -126,7 +122,6 @@ const PageAccessPage = () => {
     try {
       const response = await axioss.patch('/users/page-access-settings/', {
         role: row.role,
-        // Butun obyekt yuboriladi: ko'rsatilmaydigan СИЗ kalitlari ham saqlanib qoladi.
         pages: row.pages,
         features: row.features,
       });

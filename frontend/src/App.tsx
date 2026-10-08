@@ -18,27 +18,13 @@ import Alerts from './pages/UiElements/Alerts';
 import Buttons from './pages/UiElements/Buttons';
 import DefaultLayout from './layout/DefaultLayout';
 import Main from './pages/Dashboard/Main';
-import DueSoonPage from './pages/Dashboard/DueSoonPage';
-import AddCompyuter from './pages/AddCompyuter/AddCompyuter';
-import PageCompyuter from './pages/ViewCompyuter/PagaCompyuter';
-import EditCompyuterPage from './pages/EditCompyuter/EditCompyuterPage';
-import AddItemPage from './pages/AddItem/AddItemPage';
-import StatisticsPage from './pages/Statistics';
-import StatisticsDetailsPage from './pages/Statistics/DetailsPage';
-import PPEArrivalPage from './pages/PPEArrival';
-import SignaturePage from './pages/Signature/SignaturePage';
 import NastroykaPage from './pages/Nastroyka';
 import NotFoundPage from './pages/NotFound';
 import DepartmentPage from './pages/Nastroyka/DepartmentPage';
 import SectionPage from './pages/Nastroyka/SectionPage';
-import ProductPage from './pages/Nastroyka/ProductPage';
-import DepartmentPPERulePage from './pages/Nastroyka/DepartmentPPERulePage';
 import PersonPage from './pages/Nastroyka/PersonPage';
 import UserPage from './pages/Nastroyka/UserPage';
-import FaceIDPage from './pages/Nastroyka/FaceIDPage';
 import PageAccessPage from './pages/Nastroyka/PageAccessPage';
-import DailyPPEIssuedPage from './pages/Nastroyka/DailyPPEIssuedPage';
-import BaseImageChangeLogPage from './pages/Nastroyka/BaseImageChangeLogPage';
 import PasportaPage from './pages/Pasporta/PasportaPage';
 import PendingApprovalsPage from './pages/Pasporta/PendingApprovalsPage';
 import PasportaCreatePage from './pages/Pasporta/PasportaCreatePage';
@@ -49,7 +35,6 @@ import SpravkiCreatePage from './pages/Spravki/SpravkiCreatePage';
 import PassportTemplatesPage from './pages/Nastroyka/PassportTemplatesPage';
 import PassportTemplateDetailPage from './pages/Nastroyka/PassportTemplateDetailPage';
 import BenzinTemplatesDetailPage from './pages/Nastroyka/BenzinTemplatesDetailPage';
-import IssueQrDetailPage from './pages/IssueQr/IssueQrDetailPage';
 import PassportVerifyPage from './pages/PassportVerify/PassportVerifyPage';
 import { isAuthenticated } from './utils/auth';
 import axioss from './api/axios';
@@ -67,7 +52,6 @@ import {
   FeatureAccess,
   NormalizedRole,
   storePageAccess,
-  isManagerTierRole,
 } from './utils/pageAccess';
 
 
@@ -80,11 +64,7 @@ function App() {
   const { pathname } = useLocation();
 
   const canAccessDashboard = pageAccess.dashboard;
-  const canAccessPPEArrival = pageAccess.ppe_arrival;
-  const canAccessStatistics = pageAccess.statistics;
   const canAccessSettings = pageAccess.settings;
-  const canAccessDueSoonDetails = featureAccess.dashboard_due_cards;
-  const canAccessFaceIdControl = featureAccess.face_id_control;
   const isAdmin = trustedRole === 'admin';
   // Паспорта is its own toggle in Настройка → Доступ, deliberately independent of
   // pageAccess.settings: the passport form renders the template page, and Начальник смены
@@ -98,8 +78,6 @@ function App() {
     canAccessPassports && (featureAccess.passport_create || featureAccess.passport_edit);
   // Совпадает с проверкой feature spravka_create в SpravkaListCreateView.
   const canCreateSpravka = featureAccess.spravka_create;
-  const canAccessDailyPpeIssued = trustedRole === 'admin' || isManagerTierRole(trustedRole);
-  const canAccessBaseImageChangeLogs = trustedRole === 'admin' || isManagerTierRole(trustedRole);
   const fallbackRoute = getFirstAccessibleRoute(pageAccess) || '/no-access';
 
   const getDeniedRoute = () => (fallbackRoute === pathname ? '/no-access' : fallbackRoute);
@@ -165,30 +143,6 @@ function App() {
 
   return loading || !authResolved ? (
     <Loader />
-  ) : pathname.startsWith('/issue-qr/') ? (
-    <>
-      <Routes>
-        <Route
-          path="/issue-qr/:token"
-          element={
-            <>
-              <PageTitle title="QR выдача СИЗ" />
-              <IssueQrDetailPage />
-            </>
-          }
-        />
-        <Route
-          path="*"
-          element={
-            <>
-              <PageTitle title="404 - Страница не найдена" />
-              <NotFoundPage />
-            </>
-          }
-        />
-      </Routes>
-      <ToastContainer />
-    </>
   ) : pathname.startsWith('/passport-verify/') ? (
     <>
       <Routes>
@@ -233,102 +187,6 @@ function App() {
           }
         />
         <Route
-          path="/add-compyuter"
-          element={
-            <>
-              <PageTitle title="Добавить компьютер" />
-              <AddCompyuter />
-            </>
-          }
-        />
-        <Route
-          path={`/edit-computer/:slug`}
-          element={
-            <>
-              <PageTitle title="Редактирование компьютер" />
-              <EditCompyuterPage />
-            </>
-          }
-        />
-        <Route
-          path={`/item-view/:slug`}
-          element={
-            <>
-              <PageCompyuter />
-            </>
-          }
-        />
-        <Route
-          path={`/add-item/:slug`}
-          element={
-            <>
-              <PageTitle title="Добавить средства защиты" />
-              <AddItemPage />
-            </>
-          }
-        />
-        <Route
-          path={`/signature/:id`}
-          element={
-            <>
-              <PageTitle title="Подпись сотрудника" />
-              <SignaturePage />
-            </>
-          }
-        />
-        <Route
-          path="/ppe-arrival"
-          element={
-            isAuthenticated() && canAccessPPEArrival ? (
-              <>
-                <PageTitle title="Прием СИЗ" />
-                <PPEArrivalPage />
-              </>
-            ) : (
-              <Navigate to={isAuthenticated() ? getDeniedRoute() : '/auth/signin'} replace />
-            )
-          }
-        />
-        <Route
-          path="/dashboard/due-soon"
-          element={
-            isAuthenticated() && canAccessDashboard && canAccessDueSoonDetails ? (
-              <>
-                <PageTitle title="Кому скоро нужен СИЗ" />
-                <DueSoonPage />
-              </>
-            ) : (
-              <Navigate to={isAuthenticated() ? getDeniedRoute() : '/auth/signin'} replace />
-            )
-          }
-        />
-        <Route
-          path="/statistics"
-          element={
-            isAuthenticated() && canAccessStatistics ? (
-              <>
-                <PageTitle title="Статистика" />
-                <StatisticsPage />
-              </>
-            ) : (
-              <Navigate to={isAuthenticated() ? getDeniedRoute() : '/auth/signin'} replace />
-            )
-          }
-        />
-        <Route
-          path="/statistics/:detailsType/:productId"
-          element={
-            isAuthenticated() && canAccessStatistics ? (
-              <>
-                <PageTitle title="Детали статистики" />
-                <StatisticsDetailsPage />
-              </>
-            ) : (
-              <Navigate to={isAuthenticated() ? getDeniedRoute() : '/auth/signin'} replace />
-            )
-          }
-        />
-        <Route
           path="/nastroyka"
           element={
             isAuthenticated() && canAccessSettings ? (
@@ -368,45 +226,6 @@ function App() {
           }
         />
         <Route
-          path="/nastroyka/product"
-          element={
-            isAuthenticated() && canAccessSettings ? (
-              <>
-                <PageTitle title="Средство инд. защиты" />
-                <ProductPage />
-              </>
-            ) : (
-              <Navigate to={isAuthenticated() ? getDeniedRoute() : '/auth/signin'} replace />
-            )
-          }
-        />
-        <Route
-          path="/nastroyka/ppe-norms"
-          element={
-            isAuthenticated() && canAccessSettings ? (
-              <>
-                <PageTitle title="Нормы выдачи по должностям" />
-                <DepartmentPPERulePage />
-              </>
-            ) : (
-              <Navigate to={isAuthenticated() ? getDeniedRoute() : '/auth/signin'} replace />
-            )
-          }
-        />
-        <Route
-          path="/nastroyka/ppe-norms/create"
-          element={
-            isAuthenticated() && canAccessSettings ? (
-              <>
-                <PageTitle title="Нормы выдачи по должностям" />
-                <DepartmentPPERulePage />
-              </>
-            ) : (
-              <Navigate to={isAuthenticated() ? getDeniedRoute() : '/auth/signin'} replace />
-            )
-          }
-        />
-        <Route
           path="/nastroyka/person"
           element={
             isAuthenticated() && canAccessSettings ? (
@@ -439,32 +258,6 @@ function App() {
               <>
                 <PageTitle title="Доступ к страницам" />
                 <PageAccessPage />
-              </>
-            ) : (
-              <Navigate to={isAuthenticated() ? getDeniedRoute() : '/auth/signin'} replace />
-            )
-          }
-        />
-        <Route
-          path="/nastroyka/daily-ppe-issued"
-          element={
-            isAuthenticated() && canAccessSettings && canAccessDailyPpeIssued ? (
-              <>
-                <PageTitle title="Ежедневная выдача СИЗ" />
-                <DailyPPEIssuedPage />
-              </>
-            ) : (
-              <Navigate to={isAuthenticated() ? getDeniedRoute() : '/auth/signin'} replace />
-            )
-          }
-        />
-        <Route
-          path="/nastroyka/base-image-change-logs"
-          element={
-            isAuthenticated() && canAccessSettings && canAccessBaseImageChangeLogs ? (
-              <>
-                <PageTitle title="История смены базового фото" />
-                <BaseImageChangeLogPage />
               </>
             ) : (
               <Navigate to={isAuthenticated() ? getDeniedRoute() : '/auth/signin'} replace />
@@ -643,19 +436,6 @@ function App() {
               </>
             ) : (
               <Navigate to="/auth/signin" replace />
-            )
-          }
-        />
-        <Route
-          path="/nastroyka/faceid"
-          element={
-            isAuthenticated() && canAccessSettings && canAccessFaceIdControl ? (
-              <>
-                <PageTitle title="Face ID настройки" />
-                <FaceIDPage />
-              </>
-            ) : (
-              <Navigate to={isAuthenticated() ? getDeniedRoute() : '/auth/signin'} replace />
             )
           }
         />

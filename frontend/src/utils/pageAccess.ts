@@ -5,32 +5,22 @@ export type NormalizedRole = 'admin' | 'it_center' | 'shift_head' | 'sttl_head' 
 export const MANAGER_TIER_ROLES: NormalizedRole[] = ['shift_head', 'sttl_head', 'czl_head', 'dispatcher'];
 export const isManagerTierRole = (role: NormalizedRole) => (MANAGER_TIER_ROLES as string[]).includes(role);
 
-// ppe_arrival va statistics — СИЗ davridan qolgan sahifalar: menyudan olib tashlangan,
-// lekin marshrutlari hali tirik, shuning uchun kalitlar saqlanadi (ular «Доступ к страницам»
-// UI-da ko'rsatilmaydi). Qolgan beshtasi — laboratoriya pasport ilovasining haqiqiy bo'limlari.
+// Laboratoriya pasport ilovasining bo'limlari. СИЗ (PPE) quyi tizimi loyihadan
+// butunlay olib tashlandi, shuning uchun bu yerda ppe_arrival/statistics kalitlari yo'q.
 export type PageAccess = {
   dashboard: boolean;
-  ppe_arrival: boolean;
-  statistics: boolean;
   passports: boolean;
   pending_approvals: boolean;
   spravki: boolean;
   settings: boolean;
 };
 
-// Birinchi beshtasi — СИЗ qoldig'i. Oxirgi beshtasi — pasport oqimining haqiqiy huquqlari;
-// ular ilgari komponentlarda rol nomiga qattiq bog'langan edi.
+// Pasport oqimining huquqlari. Ilgari ular komponentlarda rol nomiga qattiq bog'langan edi.
 export type FeatureAccess = {
-  dashboard_due_cards: boolean;
-  dashboard_export_excel: boolean;
-  dashboard_delete_employee: boolean;
-  employee_ppe_tab: boolean;
-  ppe_arrival_intake: boolean;
   passport_create: boolean;
   passport_edit: boolean;
   passport_delete: boolean;
   spravka_create: boolean;
-  face_id_control: boolean;
 };
 
 const PAGE_ACCESS_STORAGE_KEY = 'page_access';
@@ -57,8 +47,6 @@ export const getDefaultPageAccess = (role: NormalizedRole): PageAccess => {
   // autentifikatsiyalangan rolga ochiq edi, false qilish ularni jimgina yopib qo'yardi.
   const minimal: PageAccess = {
     dashboard: true,
-    ppe_arrival: false,
-    statistics: false,
     passports: true,
     pending_approvals: false,
     spravki: true,
@@ -72,8 +60,6 @@ export const getDefaultPageAccess = (role: NormalizedRole): PageAccess => {
 
   return {
     dashboard: true,
-    ppe_arrival: true,
-    statistics: true,
     passports: true,
     pending_approvals: role === 'admin' || PENDING_APPROVAL_DEFAULT_ROLES.includes(role),
     spravki: true,
@@ -84,51 +70,32 @@ export const getDefaultPageAccess = (role: NormalizedRole): PageAccess => {
 export const getDefaultFeatureAccess = (role: NormalizedRole): FeatureAccess => {
   // Паспортni tahrirlash ilgari "role !== user" sharti edi.
   const minimal: FeatureAccess = {
-    dashboard_due_cards: true,
-    dashboard_export_excel: true,
-    dashboard_delete_employee: false,
-    employee_ppe_tab: true,
-    ppe_arrival_intake: false,
     passport_create: false,
     passport_edit: false,
     passport_delete: false,
     spravka_create: false,
-    face_id_control: false,
   };
 
   if (role === 'admin') {
     return {
-      dashboard_due_cards: true,
-      dashboard_export_excel: true,
-      dashboard_delete_employee: true,
-      employee_ppe_tab: true,
-      ppe_arrival_intake: true,
       passport_create: true,
       passport_edit: true,
       passport_delete: true,
       spravka_create: true,
-      face_id_control: true,
     };
   }
 
   if (role === 'it_center') {
-    return {
-      ...minimal,
-      dashboard_delete_employee: true,
-      ppe_arrival_intake: true,
-      passport_edit: true,
-    };
+    return { ...minimal, passport_edit: true };
   }
 
   if (isManagerTierRole(role)) {
     const isShiftHead = role === 'shift_head';
     return {
-      ...minimal,
-      ppe_arrival_intake: true,
       passport_create: isShiftHead,
       passport_edit: true,
+      passport_delete: false,
       spravka_create: isShiftHead,
-      face_id_control: true,
     };
   }
 
@@ -205,8 +172,6 @@ export const getFirstAccessibleRoute = (pageAccess: PageAccess) => {
   if (pageAccess.passports) return '/pasporta';
   if (pageAccess.pending_approvals) return '/pasporta/pending-approvals';
   if (pageAccess.spravki) return '/spravki';
-  if (pageAccess.ppe_arrival) return '/ppe-arrival';
-  if (pageAccess.statistics) return '/statistics';
   if (pageAccess.settings) return '/nastroyka';
   return null;
 };

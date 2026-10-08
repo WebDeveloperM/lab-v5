@@ -45,17 +45,13 @@ class RolePageAccessSettingsTests(APITestCase):
 				'role': UserRole.SHIFT_HEAD,
 				'pages': {
 					'dashboard': True,
-					'ppe_arrival': False,
-					'statistics': False,
+					'pending_approvals': True,
+					'spravki': False,
 					'settings': True,
 				},
 				'features': {
-					'dashboard_due_cards': False,
-					'dashboard_export_excel': False,
-					'dashboard_delete_employee': False,
-					'employee_ppe_tab': False,
-					'face_id_control': True,
-					'ppe_arrival_intake': True,
+					'passport_create': False,
+					'passport_delete': True,
 				},
 			},
 			format='json',
@@ -63,34 +59,26 @@ class RolePageAccessSettingsTests(APITestCase):
 
 		self.assertEqual(response.status_code, status.HTTP_200_OK)
 		self.assertEqual(response.data['role'], UserRole.SHIFT_HEAD)
-		self.assertFalse(response.data['pages']['ppe_arrival'])
-		self.assertFalse(response.data['pages']['statistics'])
-		self.assertFalse(response.data['features']['employee_ppe_tab'])
-		self.assertTrue(response.data['features']['face_id_control'])
-		self.assertTrue(response.data['features']['ppe_arrival_intake'])
+		self.assertTrue(response.data['pages']['pending_approvals'])
+		self.assertFalse(response.data['pages']['spravki'])
+		self.assertFalse(response.data['features']['passport_create'])
+		self.assertTrue(response.data['features']['passport_delete'])
+		# PATCH da ko'rsatilmagan kalit tegilmaydi: shift_head uchun standart True.
+		self.assertTrue(response.data['features']['passport_edit'])
 
 		role_access = RolePageAccess.objects.get(role=UserRole.SHIFT_HEAD)
-		self.assertFalse(role_access.can_view_ppe_arrival)
-		self.assertFalse(role_access.can_view_statistics)
-		self.assertTrue(role_access.can_edit_employee)
-		self.assertFalse(role_access.can_view_employee_ppe_tab)
-		self.assertTrue(role_access.can_manage_face_id_control)
-		self.assertTrue(role_access.can_submit_ppe_arrival)
-
+		self.assertTrue(role_access.can_view_pending_approvals)
+		self.assertFalse(role_access.can_view_spravki)
+		self.assertFalse(role_access.can_create_passport)
+		self.assertTrue(role_access.can_delete_passport)
 	def test_user_info_returns_page_access_from_settings(self):
 		RolePageAccess.objects.update_or_create(
 			role=UserRole.SHIFT_HEAD,
 			defaults={
 				'can_view_dashboard': True,
-				'can_view_ppe_arrival': False,
-				'can_view_statistics': True,
+				'can_view_pending_approvals': True,
 				'can_view_settings': False,
-				'can_view_dashboard_due_cards': False,
-				'can_export_dashboard_excel': False,
-				'can_delete_employee': False,
-				'can_view_employee_ppe_tab': False,
-				'can_manage_face_id_control': True,
-				'can_submit_ppe_arrival': True,
+				'can_delete_passport': True,
 			},
 		)
 
@@ -103,10 +91,8 @@ class RolePageAccessSettingsTests(APITestCase):
 			response.data['page_access'],
 			{
 				'dashboard': True,
-				'ppe_arrival': False,
-				'statistics': True,
 				'passports': True,
-				'pending_approvals': False,
+				'pending_approvals': True,
 				'spravki': True,
 				'settings': False,
 			},
@@ -114,16 +100,12 @@ class RolePageAccessSettingsTests(APITestCase):
 		self.assertEqual(
 			response.data['feature_access'],
 			{
-				'dashboard_due_cards': False,
-				'dashboard_export_excel': False,
-				'dashboard_delete_employee': False,
-				'employee_ppe_tab': False,
-				'ppe_arrival_intake': True,
-				'passport_create': False,
-				'passport_edit': False,
-				'passport_delete': False,
-				'spravka_create': False,
-				'face_id_control': True,
+			# Qator UserRole saqlanganda signal orqali shift_head standartlari bilan yaratilgan;
+			# update_or_create faqat can_delete_passport ni o'zgartirgan.
+				'passport_create': True,
+				'passport_edit': True,
+				'passport_delete': True,
+				'spravka_create': True,
 			},
 		)
 
@@ -142,8 +124,6 @@ class RolePageAccessSettingsTests(APITestCase):
 			response.data['page_access'],
 			{
 				'dashboard': True,
-				'ppe_arrival': True,
-				'statistics': True,
 				'passports': True,
 				'pending_approvals': False,
 				'spravki': True,
@@ -153,16 +133,10 @@ class RolePageAccessSettingsTests(APITestCase):
 		self.assertEqual(
 			response.data['feature_access'],
 			{
-				'dashboard_due_cards': True,
-				'dashboard_export_excel': True,
-				'dashboard_delete_employee': True,
-				'employee_ppe_tab': True,
-				'ppe_arrival_intake': True,
 				'passport_create': False,
 				'passport_edit': True,
 				'passport_delete': False,
 				'spravka_create': False,
-				'face_id_control': False,
 			},
 		)
 		self.assertEqual(

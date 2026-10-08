@@ -17,14 +17,11 @@ drf_spectacular_sidecar
 psycopg2-binary
 
 # Data processing
-pandas
-openpyxl
 numpy>=2.1
 opencv-contrib-python-headless
 
 # Document & file processing
 pillow
-qrcode==8.0
 reportlab==4.2.5
 PyPDF2==3.0.1
 python-docx==1.1.2

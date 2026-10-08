@@ -4,7 +4,7 @@ import { FaCertificate, FaFileSignature, FaIdCard } from 'react-icons/fa';
 import SidebarLinkGroup from './SidebarLinkGroup';
 import Logo from '../../images/logo/logo.png';
 import axioss from '../../api/axios';
-import { getFirstAccessibleRoute, getStoredFeatureAccess, getStoredPageAccess, normalizeRole, isManagerTierRole } from '../../utils/pageAccess';
+import { getFirstAccessibleRoute, getStoredPageAccess, normalizeRole, isManagerTierRole } from '../../utils/pageAccess';
 
 interface SidebarProps {
   sidebarOpen: boolean;
@@ -19,51 +19,17 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
   const isLogin = localStorage.getItem('isLogin')
   const role = normalizeRole(localStorage.getItem('role'));
   const pageAccess = getStoredPageAccess(role);
-  const featureAccess = getStoredFeatureAccess(role);
   const firstAccessibleRoute = getFirstAccessibleRoute(pageAccess) || '/no-access';
   const isAdmin = role === 'admin';
-  // const canSeeDailyPpeIssued = role === 'admin' || isManagerTierRole(role);
-  // const canSeeBaseImageChangeLogs = role === 'admin' || isManagerTierRole(role);
   const canSeeDashboard = pageAccess.dashboard;
   const canSeePassports = pageAccess.passports;
   const canSeeSpravki = pageAccess.spravki;
   const canSeeSettings = pageAccess.settings;
-  // const canSeePPEArrival = pageAccess.ppe_arrival;
-  // const canSeeStatistics = pageAccess.statistics;
   const canEditBaseSettings = role === 'admin' || role === 'it_center' || isManagerTierRole(role);
   const canSeePendingApprovals = pageAccess.pending_approvals;
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
-  const canManageFaceIdControl = featureAccess.face_id_control;
   const isSettingsRoute = pathname === '/nastroyka' || pathname.startsWith('/nastroyka/');
   const settingsMenuItems = [
-    /* canEditBaseSettings
-      ? {
-          to: '/nastroyka/product',
-          label: 'Средство инд. защиты',
-          icon: (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M12 3L19 6V11C19 15.4183 16.1402 19.3007 12 21C7.85979 19.3007 5 15.4183 5 11V6L12 3Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
-              <path d="M9.5 12L11.2 13.7L14.8 10.1" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          ),
-        }
-      : null, */
-    /* canEditBaseSettings
-      ? {
-          to: '/nastroyka/ppe-norms',
-          label: 'Нормы выдачи по должностям',
-          icon: (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M8 6H20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-              <path d="M8 12H20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-              <path d="M8 18H20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-              <path d="M4 6H4.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
-              <path d="M4 12H4.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
-              <path d="M4 18H4.01" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"/>
-            </svg>
-          ),
-        }
-      : null, */
     canEditBaseSettings
       ? {
           to: '/nastroyka/person',
@@ -99,21 +65,6 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <rect x="4" y="11" width="16" height="9" rx="2" stroke="currentColor" strokeWidth="1.8"/>
               <path d="M8 11V8C8 5.79086 9.79086 4 12 4C14.2091 4 16 5.79086 16 8V11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-            </svg>
-          ),
-        }
-      : null,
-    canManageFaceIdControl
-      ? {
-          to: '/nastroyka/faceid',
-          label: 'Face ID настройки',
-          icon: (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 10V14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-              <path d="M8 6V18" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-              <path d="M12 3V21" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-              <path d="M16 8V16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-              <path d="M20 10V14" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
             </svg>
           ),
         }
@@ -246,91 +197,6 @@ const Sidebar = ({ sidebarOpen, setSidebarOpen }: SidebarProps) => {
                   </NavLink>
                 </li>
               )}
-              {/* canSeePPEArrival && (
-                <li>
-                  <NavLink
-                    to="/ppe-arrival"
-                    className={`group relative flex items-center rounded-sm py-2 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${sidebarOpen ? 'gap-2.5 px-4 justify-start' : 'justify-center px-2'} ${pathname.includes('/ppe-arrival') &&
-                      'bg-graydark dark:bg-meta-4'
-                      }`}
-                  >
-                    <svg className="fill-current" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M19 9H15V3H9V9H5L12 16L19 9Z" fill=""/>
-                      <path d="M5 18V20H19V18H5Z" fill=""/>
-                    </svg>
-                    {sidebarOpen && 'Прием СИЗ'}
-                  </NavLink>
-                </li>
-              ) */}
-              {/* canSeeStatistics && (
-                <li>
-                  <NavLink
-                    to="/statistics"
-                    className={`group relative flex items-center rounded-sm py-2 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${sidebarOpen ? 'gap-2.5 px-4 justify-start' : 'justify-center px-2'} ${pathname.includes('/statistics') &&
-                      'bg-graydark dark:bg-meta-4'
-                      }`}
-                  >
-                    <svg
-                      className="fill-current"
-                      width="18"
-                      height="18"
-                      viewBox="0 0 18 18"
-                      fill="none"
-                      xmlns="http://www.w3.org/2000/svg"
-                    >
-                      <path
-                        d="M2.25 15.75C1.83579 15.75 1.5 15.4142 1.5 15V3C1.5 2.58579 1.83579 2.25 2.25 2.25C2.66421 2.25 3 2.58579 3 3V15C3 15.4142 2.66421 15.75 2.25 15.75Z"
-                        fill=""
-                      />
-                      <path
-                        d="M7.125 15.75C6.71079 15.75 6.375 15.4142 6.375 15V9C6.375 8.58579 6.71079 8.25 7.125 8.25C7.53921 8.25 7.875 8.58579 7.875 9V15C7.875 15.4142 7.53921 15.75 7.125 15.75Z"
-                        fill=""
-                      />
-                      <path
-                        d="M12 15.75C11.5858 15.75 11.25 15.4142 11.25 15V6C11.25 5.58579 11.5858 5.25 12 5.25C12.4142 5.25 12.75 5.58579 12.75 6V15C12.75 15.4142 12.4142 15.75 12 15.75Z"
-                        fill=""
-                      />
-                      <path
-                        d="M16.875 15.75C16.4608 15.75 16.125 15.4142 16.125 15V11.25C16.125 10.8358 16.4608 10.5 16.875 10.5C17.2892 10.5 17.625 10.8358 17.625 11.25V15C17.625 15.4142 17.2892 15.75 16.875 15.75Z"
-                        fill=""
-                      />
-                    </svg>
-                    {sidebarOpen && 'Статистика'}
-                  </NavLink>
-                </li>
-              ) */}
-              {/* canSeeDailyPpeIssued && (
-                <li>
-                  <NavLink
-                    to="/nastroyka/daily-ppe-issued"
-                    className={`group relative flex items-center rounded-sm py-2 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${sidebarOpen ? 'gap-2.5 px-4 justify-start' : 'justify-center px-2'} ${pathname.includes('/nastroyka/daily-ppe-issued') && 'bg-graydark dark:bg-meta-4'}`}
-                  >
-                    <svg className="fill-current" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M14 3H7C5.89543 3 5 3.89543 5 5V19C5 20.1046 5.89543 21 7 21H17C18.1046 21 19 20.1046 19 19V8L14 3Z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
-                      <path d="M14 3V8H19" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"/>
-                      <path d="M9 13H15" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-                      <path d="M9 17H15" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-                    </svg>
-                    {sidebarOpen && 'Ежедневная выдача СИЗ'}
-                  </NavLink>
-                </li>
-              ) */}
-              {/* canSeeBaseImageChangeLogs && (
-                <li>
-                  <NavLink
-                    to="/nastroyka/base-image-change-logs"
-                    className={`group relative flex items-center rounded-sm py-2 font-medium text-bodydark1 duration-300 ease-in-out hover:bg-graydark dark:hover:bg-meta-4 ${sidebarOpen ? 'gap-2.5 px-4 justify-start' : 'justify-center px-2'} ${pathname.includes('/nastroyka/base-image-change-logs') && 'bg-graydark dark:bg-meta-4'}`}
-                  >
-                    <svg className="fill-current" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M5 5.75C5 5.33579 5.33579 5 5.75 5H18.25C18.6642 5 19 5.33579 19 5.75V18.25C19 18.6642 18.6642 19 18.25 19H5.75C5.33579 19 5 18.6642 5 18.25V5.75Z" stroke="currentColor" strokeWidth="1.8"/>
-                      <path d="M8 9H16" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-                      <path d="M8 12H13" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>
-                      <path d="M8 16L10 14L11.5 15.5L15 12" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                    </svg>
-                    {sidebarOpen && 'История смены фото'}
-                  </NavLink>
-                </li>
-              ) */}
               {canSeePassports && (
                 <li>
                   <NavLink
