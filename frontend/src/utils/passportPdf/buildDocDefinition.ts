@@ -2566,10 +2566,13 @@ function buildDocDefinition(
         text: [
           'Дата  отбора образцов: ', uld('sampling_date', 12),
           '   по ГОСТ 2517 Из резервуара № ', ul('reservoir_no', 8),
-          '   количество заявленных вагон цистерн: ', ul('wagon_numbers', 20),
+          '   количество заявленных вагон цистерн: ', ul('wagon_count', 6),
         ],
         fontSize: 10, margin: [0, 0, 0, 3],
       },
+      ...(rv.wagon_numbers
+        ? [{ text: ['номера вагон цистерн: ', ul('wagon_numbers', 50)], fontSize: 10, margin: [0, 0, 0, 3] }]
+        : []),
       { canvas: [{ type: 'line', x1: 0, y1: 0, x2: LINE_W, y2: 0, lineWidth: 0.5 }], margin: [0, 0, 0, 3] },
       {
         columns: [

@@ -787,11 +787,13 @@ export default function PassportTemplateDetailPage() {
     const isNumeric = key === 'wagon_count';
     return (
       <input
-        type={isNumeric ? 'number' : field?.type === 'date' ? 'date' : 'text'}
+        // type="number" still lets through "e", "-", "." — a plain text input stripped to
+        // digits is the only way to keep the count to whole numbers.
+        type={isNumeric ? 'text' : field?.type === 'date' ? 'date' : 'text'}
         inputMode={isNumeric ? 'numeric' : undefined}
-        min={isNumeric ? 0 : undefined}
+        pattern={isNumeric ? '[0-9]*' : undefined}
         value={reservoirValues[key] || ''}
-        onChange={(event) => setReservoirValue(key, event.target.value)}
+        onChange={(event) => setReservoirValue(key, isNumeric ? event.target.value.replace(/\D/g, '') : event.target.value)}
         onFocus={(e) => e.target.select()}
         placeholder={placeholder}
         className={`${inlineInputCls} ${hasError ? '!border-red-600 !border-b-2' : ''}`}
@@ -823,13 +825,18 @@ export default function PassportTemplateDetailPage() {
     const expectedPosition = EMPLOYEE_FIELD_POSITION[key];
     const options = expectedPosition ? employees.filter(emp => emp.position === expectedPosition) : employees;
     const locked = key === 'shift_head' && lockShiftHead;
+    // The red underline marks a required field; optional signers (СТТЛ / ЦЗЛ / Диспетчер —
+    // an unassigned step is simply skipped) get a neutral one instead.
+    const baseCls = req
+      ? inlineInputCls
+      : inlineInputCls.replace('border-red-400', 'border-stroke dark:border-strokedark');
     return (
       <select
         value={reservoirValues[key] || ''}
         disabled={locked}
         title={locked ? 'Вы подписываете как начальник смены' : undefined}
         onChange={(e) => setReservoirValue(key, e.target.value)}
-        className={`${inlineInputCls.replace('h-8', 'h-11')} ${locked ? 'cursor-not-allowed opacity-90' : 'cursor-pointer'} ${hasError ? '!border-red-600 !border-b-2' : ''}`}
+        className={`${baseCls.replace('h-8', 'h-11')} ${locked ? 'cursor-not-allowed opacity-90' : 'cursor-pointer'} ${hasError ? '!border-red-600 !border-b-2' : ''}`}
       >
         <option value="">— Выберите —</option>
         {options.map(emp => (
@@ -2114,6 +2121,7 @@ export default function PassportTemplateDetailPage() {
                           <span>по ГОСТ 2517 Из резервуара №</span>
                           {renderReservoirInput('reservoir_no', '', true)}
                           <span>количество заявленных вагон цистерн:</span>
+                          {renderReservoirInput('wagon_count', '', true)}
                           {renderReservoirTextarea('wagon_numbers', true)}
                         </div>
                         <hr className="border-stroke dark:border-strokedark" />
@@ -4019,7 +4027,7 @@ export default function PassportTemplateDetailPage() {
                           <th className={thCls}>№</th>
                           <th className={thCls}>Наименование показателей</th>
                           <th className={thCls}>Метод контроля</th>
-                          <th className={thCls}>{isDieselEcoL_0100_62 ? 'Норма для марки ЭКО-Л-0,100-62' : "Значение по O'zMSt 610:2025"}</th>
+                          <th className={thCls}>{isDieselEcoL_0100_62 ? 'Норма для марки ЭКО-Л-0,100-62' : isDieselEcoL_0100_40 ? "Значение по O'z DSt 1134:2018" : "Значение по O'zMSt 610:2025"}</th>
                           {!hideDieselOtrColumn && <th className={thCls}>Значение по ОТР UzTR.931-028:2017</th>}
                           <th className={thCls}>Фактическое значение</th>
                         </tr>
@@ -5688,7 +5696,7 @@ export default function PassportTemplateDetailPage() {
                     : isDieselEcoL_0100_40Reservoir
                     ? diesel3OReservoirRequired
                     : isDieselEcoL_0100_40Wagon
-                    ? diesel3OWagonRequired
+                    ? dieselWagonWithCountRequired
                     : isDieselEcoL_0100_62Reservoir
                     ? diesel3OReservoirRequired
                     : isDieselEcoL_0100_62Wagon
