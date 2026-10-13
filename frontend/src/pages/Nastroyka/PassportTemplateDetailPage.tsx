@@ -224,9 +224,13 @@ export default function PassportTemplateDetailPage() {
   const editPassportId = searchParams.get('editPassportId') || '';
   const typeParam = searchParams.get('type') as 'reservoir' | 'wagon' | null;
   const isEdit = Boolean(editPassportId);
+  // «Дублировать»: yangi pasport, lekin jadval (actual_values) shu pasportdan nusxalanadi.
+  // Shapka (field_values) nusxalanmaydi — raqam, sanalar va h.k. yangidan to'ldiriladi.
+  const duplicatePassportId = isEdit ? '' : (searchParams.get('duplicatePassportId') || '');
+  const isDuplicate = Boolean(duplicatePassportId);
   const backCat = from === 'diesel' ? 'Дизель' : from === 'diesel-eco' ? 'Дизель ЭКО' : from === 'benzin' ? 'Бензин' : '';
   const selectBack = backCat ? `/pasporta/select?cat=${encodeURIComponent(backCat)}` : '/pasporta/select';
-  const backPath = isEdit ? '/pasporta' : (from === 'benzin' || from === 'jet' || from === 'diesel' || from === 'diesel-eco') ? selectBack : '/nastroyka/passport-templates';
+  const backPath = (isEdit || isDuplicate) ? '/pasporta' : (from === 'benzin' || from === 'jet' || from === 'diesel' || from === 'diesel-eco') ? selectBack : '/nastroyka/passport-templates';
   const staticBackPath =
     from === 'kerosine' ? `/pasporta/select?cat=${encodeURIComponent('Керосиновая фракция')}`
     : from === 'mazut' ? `/pasporta/select?cat=${encodeURIComponent('Мазут')}`
@@ -234,7 +238,7 @@ export default function PassportTemplateDetailPage() {
     : from === 'sera' ? `/pasporta/select?cat=${encodeURIComponent('Техническая сера')}`
     : from === 'gaz' ? `/pasporta/select?cat=${encodeURIComponent('Сжиженный газ')}`
     : null;
-  const handleBack = () => (!isEdit && staticBackPath) ? navigate(staticBackPath) : navigate(backPath);
+  const handleBack = () => (!isEdit && !isDuplicate && staticBackPath) ? navigate(staticBackPath) : navigate(backPath);
 
   useEffect(() => {
     axioss.get('/settings/responsible-persons/')
@@ -443,6 +447,17 @@ export default function PassportTemplateDetailPage() {
       })
       .catch(() => toast.error('Паспорт маълумотларини юклаб бўлмади'));
   }, [editPassportId, detail]);
+
+  // Copy only the results table from the source passport when duplicating
+  useEffect(() => {
+    if (!duplicatePassportId || !detail) return;
+    axioss.get(`/passports/${duplicatePassportId}/`)
+      .then((r: any) => {
+        const passport = r.data;
+        if (passport.actual_values) setActualRowValues({ ...passport.actual_values });
+      })
+      .catch(() => toast.error('Не удалось загрузить данные паспорта для дублирования'));
+  }, [duplicatePassportId, detail]);
 
   // Auto-generate passport_no for new passports (counter per template, shared across
   // reservoir/wagon types). Certain Бензин templates additionally share one continuous

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaEdit, FaEye, FaPlus, FaSearch, FaTrash } from 'react-icons/fa';
+import { FaCopy, FaEdit, FaEye, FaPlus, FaSearch, FaTrash } from 'react-icons/fa';
 import { FiAlertTriangle } from 'react-icons/fi';
 import { Button, Modal } from 'flowbite-react';
 import { toast } from 'react-toastify';
@@ -221,7 +221,7 @@ export default function PasportaPage() {
                 <th className={thCls}>Создан</th>
                 <th className={thCls}>Статус</th>
                 <th className={thCls}>Следующий подписант</th>
-                <th className={thCls} style={{ width: 140 }}>Действия</th>
+                <th className={thCls} style={{ width: 180 }}>Действия</th>
               </tr>
               <tr>
                 <th className={thCls} />
@@ -315,6 +315,23 @@ export default function PasportaPage() {
                   <td className={tdCls}>{getNextApprover(p)}</td>
                   <td className={tdCls}>
                     <div className="flex items-center gap-1.5">
+                      {canCreatePassport && (
+                        <button
+                          onClick={() => {
+                            const wagonKeys = ['wagon_count', 'wagon_numbers', 'reservoir_no'];
+                            const isWagon = wagonKeys.some(k => k in (p.field_values || {}));
+                            const type = isWagon ? 'wagon' : 'reservoir';
+                            navigate(
+                              `/pasporta/template/${p.template}?from=benzin&duplicatePassportId=${p.id}&type=${type}`
+                            );
+                          }}
+                          disabled={!p.template}
+                          title="Дублировать (копировать таблицу в новый паспорт)"
+                          className="rounded bg-emerald-500 px-2.5 py-1.5 text-xs text-white hover:bg-emerald-600 disabled:opacity-50"
+                        >
+                          <FaCopy size={12} />
+                        </button>
+                      )}
                       <button
                         onClick={() => setViewDrawerPassportId(p.id)}
                         title="Ko'rish"
