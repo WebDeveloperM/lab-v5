@@ -520,14 +520,16 @@ export default function PassportTemplateDetailPage() {
     'w16_mma', 'w17_methanol', 'w17_etanol', 'w17_isopropanol', 'w17_terbutanol', 'w17_isobutanol', 'w17_ethers', 'w17_other',
   ]);
 
-  // Rows that take either a number or "-" (АИ-91 / АИ-92 lead content, item 2, and densities at
-  // 20/15 °C, item 10): only digits, a decimal separator and the minus/dash are accepted, so both
-  // "5,2" and "-" can be typed but no free text.
+  // Rows that take either a number or "-" (АИ-91 / АИ-92 / АИ-95 lead content, item 2, and
+  // densities at 20/15 °C, item 10): only digits, a decimal separator and the minus/dash are
+  // accepted, so both "5,2" and "-" can be typed but no free text.
   const NUMBER_OR_DASH_ROW_KEYS = new Set([
     'a91r2_lead', 'a91w2_lead',
     'a92r2_lead', 'a92w2_lead',
+    'a95r2_lead', 'a95w2_lead',
     'a91r10_density20', 'a91w10_density20', 'a91r10_density15', 'a91w10_density15',
     'a92r10_density20', 'a92w10_density20', 'a92r10_density15', 'a92w10_density15',
+    'a95r10_density20', 'a95w10_density20', 'a95r10_density15', 'a95w10_density15',
   ]);
 
   // Rows that need a number most of the time but occasionally "отсутствует" — a dropdown offering
@@ -3470,6 +3472,12 @@ export default function PassportTemplateDetailPage() {
                           <span>ПАСПОРТ №</span>
                           {renderReservoirInput('passport_no', '', true)}
                         </div>
+                        <div className="text-center text-2xl font-semibold">
+                          Наименование продукции: Бензин автомобильный марки АИ-95- К2-Л по O&apos;zDSt 3031:2015
+                        </div>
+                        <div className="text-xl">
+                          Адрес и место осуществления испытаний: Лаборатория ООО Бухарский НПЗ, г. Караул Базар ул Мустакиллик 1 тел: 365-364-12-27
+                        </div>
                         <div className="flex flex-wrap items-end gap-x-4 gap-y-2 text-xl">
                           <span>Изготовитель и заказчик : ООО Бухарский НПЗ</span>
                           <span>Дата отбора образцов:</span>
@@ -3501,6 +3509,12 @@ export default function PassportTemplateDetailPage() {
                         <div className="flex flex-wrap items-end justify-center gap-2 text-center text-2xl font-semibold">
                           <span>ПАСПОРТ №</span>
                           {renderReservoirInput('passport_no', '', true)}
+                        </div>
+                        <div className="text-center text-2xl font-semibold">
+                          Наименование продукции: Бензин автомобильный марки АИ-95- К2-Л по O&apos;zDSt 3031:2015
+                        </div>
+                        <div className="text-xl">
+                          Адрес и место осуществления испытаний: Лаборатория ООО Бухарский НПЗ, г. Караул Базар ул Мустакиллик 1 тел: 365-364-12-27
                         </div>
                         <div className="flex flex-wrap items-end gap-x-5 gap-y-2 text-xl">
                           <span>Изготовитель и заказчик : ООО Бухарский НПЗ</span>

@@ -1507,6 +1507,8 @@ function buildDocDefinition(
   const isAI92P = (tplLower.includes('аи-92') || tplLower.includes('ai-92')) && tplLower.includes('присадка');
   const isAI95QW = tplLower.includes('quwatt');
   const isAI95 = (tplLower.includes('аи-95') || tplLower.includes('ai-95')) && !isAI95QW;
+  // isAI95 also covers АИ-95+присадка; header text changes made only for plain АИ-95 use this.
+  const isAI95Plain = isAI95 && !tplLower.includes('присадка');
   const isAI98 = tplLower.includes('аи-98') || tplLower.includes('ai-98');
   const hasDieselK4Standard = tplStandardLower.includes('610:2025') || tplStandardLower.includes('uztr.931-028:2017') || tplStandardLower.includes("o'zmst 610") || tplStandardLower.includes('ozmst 610');
   const isDieselByStandard = hasDieselK4Standard && (tplLower.includes('дизель') || tplLower.includes('дт') || tplLower.includes('евро'));
@@ -4335,7 +4337,7 @@ function buildDocDefinition(
             : isAI95QW
               ? 'Наименование продукции: Бензин марки  QuWatt  АИ 95- К2-Л вырабатываемого по Ts16472899-043:2020'
               : isAI95
-                ? `Бензин автомобильный марки АИ-95- К2-Л по ${tplStandard || "O'zDSt 3031:2015"}`
+                ? `${isAI95Plain ? 'Наименование продукции: ' : ''}Бензин автомобильный марки АИ-95- К2-Л по ${tplStandard || "O'zDSt 3031:2015"}`
                 : isAI98
                   ? `Бензин автомобильный марки АИ-98- К2-Л по ${tplStandard || "O'zDSt 3031:2015"}`
                   : isJetA1SSF
@@ -4346,7 +4348,7 @@ function buildDocDefinition(
         fontSize: 11, bold: true, alignment: 'center', margin: [0, 0, 0, 3],
       },
       {
-        text: (isJetA1SSF || isAI91 || isAI92)
+        text: (isJetA1SSF || isAI91 || isAI92 || isAI95Plain)
           ? 'Адрес и место осуществления испытаний: Лаборатория ООО Бухарский НПЗ, г. Караул Базар ул Мустакиллик 1 тел: 365-364-12-27'
           : isJetA1Notice
             ? 'Адрес и место осуществления испытаний: Лаборатория ООО Бухарский НПЗ, г. Караул Базар ул Мустакиллик 1 тел: 365-364-12-27'
