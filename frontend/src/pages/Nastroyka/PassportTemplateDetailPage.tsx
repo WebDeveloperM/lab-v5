@@ -520,12 +520,14 @@ export default function PassportTemplateDetailPage() {
     'w16_mma', 'w17_methanol', 'w17_etanol', 'w17_isopropanol', 'w17_terbutanol', 'w17_isobutanol', 'w17_ethers', 'w17_other',
   ]);
 
-  // Rows that take either a number or "-" (АИ-91's lead content, item 2, and densities at
+  // Rows that take either a number or "-" (АИ-91 / АИ-92 lead content, item 2, and densities at
   // 20/15 °C, item 10): only digits, a decimal separator and the minus/dash are accepted, so both
   // "5,2" and "-" can be typed but no free text.
   const NUMBER_OR_DASH_ROW_KEYS = new Set([
     'a91r2_lead', 'a91w2_lead',
+    'a92r2_lead', 'a92w2_lead',
     'a91r10_density20', 'a91w10_density20', 'a91r10_density15', 'a91w10_density15',
+    'a92r10_density20', 'a92w10_density20', 'a92r10_density15', 'a92w10_density15',
   ]);
 
   // Rows that need a number most of the time but occasionally "отсутствует" — a dropdown offering
