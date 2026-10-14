@@ -135,15 +135,15 @@ function AI91ResultsTable({ type, renderActualValueCell, trackedKey, renderEmplo
           </div>
           <div className="flex items-end gap-3">
             <span className="whitespace-nowrap">Начальник СТТЛ</span>
-            {renderEmployeeSelect('sttl_head', true)}
+            {renderEmployeeSelect('sttl_head')}
           </div>
           <div className="flex items-end gap-3">
             <span className="whitespace-nowrap">Начальник ЦЗЛ</span>
-            {renderEmployeeSelect('czl_head', true)}
+            {renderEmployeeSelect('czl_head')}
           </div>
           <div className="flex items-end gap-3">
             <span className="whitespace-nowrap">Диспетчер</span>
-            {renderEmployeeSelect('dispatcher_head', true)}
+            {renderEmployeeSelect('dispatcher_head')}
           </div>
         </div>
         <div className="flex flex-col gap-3">

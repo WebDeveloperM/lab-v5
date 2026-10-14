@@ -515,9 +515,17 @@ export default function PassportTemplateDetailPage() {
   // Rows whose "Фактическое значение" may be either a number or free text (e.g. "отсутствие"),
   // so the input isn't restricted to type="number".
   const TEXT_OR_NUMBER_ROW_KEYS = new Set([
-    'a91r2_lead', 'a91w2_lead', 'dlc4_5_water', 'dlb4_5_water', 'r10_density15', 'w10_density15',
+    'dlc4_5_water', 'dlb4_5_water', 'r10_density15', 'w10_density15',
     'r16_mma', 'r17_methanol', 'r17_etanol', 'r17_isopropanol', 'r17_terbutanol', 'r17_isobutanol', 'r17_ethers', 'r17_other',
     'w16_mma', 'w17_methanol', 'w17_etanol', 'w17_isopropanol', 'w17_terbutanol', 'w17_isobutanol', 'w17_ethers', 'w17_other',
+  ]);
+
+  // Rows that take either a number or "-" (АИ-91's lead content, item 2, and densities at
+  // 20/15 °C, item 10): only digits, a decimal separator and the minus/dash are accepted, so both
+  // "5,2" and "-" can be typed but no free text.
+  const NUMBER_OR_DASH_ROW_KEYS = new Set([
+    'a91r2_lead', 'a91w2_lead',
+    'a91r10_density20', 'a91w10_density20', 'a91r10_density15', 'a91w10_density15',
   ]);
 
   // Rows that need a number most of the time but occasionally "отсутствует" — a dropdown offering
@@ -739,6 +747,17 @@ export default function PassportTemplateDetailPage() {
             />
           )}
         </div>
+      );
+    }
+    if (NUMBER_OR_DASH_ROW_KEYS.has(row.key)) {
+      return (
+        <input
+          type="text"
+          inputMode="text"
+          value={value}
+          onChange={(event) => setActualRowValue(row.key, event.target.value.replace(/[^0-9.,-]/g, ''))}
+          className={`${actualValueInputCls} ${checkActualValueInvalid(row, value) ? actualValueInvalidCls : ''}`}
+        />
       );
     }
     const isTextOrNumber = TEXT_OR_NUMBER_ROW_KEYS.has(row.key);
