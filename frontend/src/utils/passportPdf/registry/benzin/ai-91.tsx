@@ -7,6 +7,20 @@ type AnyObj = any;
 const thCls = 'border border-stroke px-3 py-2 text-center text-xs font-semibold text-black dark:border-strokedark dark:text-white bg-gray-2 dark:bg-meta-4';
 const tdCls = 'border border-stroke px-3 py-2 text-xs text-black dark:border-strokedark dark:text-white';
 
+// Same for reservoir and wagon: product name line + testing-lab address, as on the paper passport.
+function AI91HeaderTitle() {
+  return (
+    <>
+      <div className="text-center text-2xl font-semibold">
+        Наименование продукции: Бензин автомобильный марки АИ-91- К2-Л по O&apos;zDSt 3031:2015
+      </div>
+      <div className="text-xl">
+        Адрес и место осуществления испытаний: Лаборатория ООО Бухарский НПЗ, г. Караул Базар ул Мустакиллик 1 тел: 365-364-12-27
+      </div>
+    </>
+  );
+}
+
 function AI91HeaderFields({ type, renderReservoirInput, renderReservoirTextarea }: TemplateFieldsProps) {
   if (type === 'wagon') {
     return (
@@ -17,6 +31,7 @@ function AI91HeaderFields({ type, renderReservoirInput, renderReservoirTextarea 
               <span>ПАСПОРТ №</span>
               {renderReservoirInput('passport_no', '', true)}
             </div>
+            <AI91HeaderTitle />
             <div className="flex flex-wrap items-end gap-x-5 gap-y-2 text-xl">
               <span>Изготовитель и заказчик : ООО Бухарский НПЗ</span>
             </div>
@@ -51,6 +66,7 @@ function AI91HeaderFields({ type, renderReservoirInput, renderReservoirTextarea 
             <span>ПАСПОРТ №</span>
             {renderReservoirInput('passport_no', '', true)}
           </div>
+          <AI91HeaderTitle />
           <div className="flex flex-wrap items-end gap-x-5 gap-y-2 text-xl">
             <span>Изготовитель и заказчик : ООО Бухарский НПЗ</span>
             <span>Резервуар:</span>

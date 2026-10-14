@@ -4252,7 +4252,9 @@ function buildDocDefinition(
       {
         text: isJetA1Notice
           ? 'от « ' + fmtDate(v('notice_date')) + ' » 2026 г.'
-          : (isAI91 || isAI91P)
+          : isAI91
+          ? `Наименование продукции: Бензин автомобильный марки АИ-91- К2-Л по ${tplStandard || "O'zDSt 3031:2015"}`
+          : isAI91P
           ? `Бензин автомобильный марки АИ-91- К2-Л по ${tplStandard || "O'zDSt 3031:2015"}`
           : isAI92
             ? `Бензин автомобильный марки АИ-92- К2-Л по ${tplStandard || "O'zDSt 3031:2015"}`
@@ -4344,7 +4346,7 @@ function buildDocDefinition(
         fontSize: 11, bold: true, alignment: 'center', margin: [0, 0, 0, 3],
       },
       {
-        text: isJetA1SSF
+        text: (isJetA1SSF || isAI91)
           ? 'Адрес и место осуществления испытаний: Лаборатория ООО Бухарский НПЗ, г. Караул Базар ул Мустакиллик 1 тел: 365-364-12-27'
           : isJetA1Notice
             ? 'Адрес и место осуществления испытаний: Лаборатория ООО Бухарский НПЗ, г. Караул Базар ул Мустакиллик 1 тел: 365-364-12-27'
