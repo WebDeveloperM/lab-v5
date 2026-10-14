@@ -3630,8 +3630,14 @@ export default function PassportTemplateDetailPage() {
                     <div className="rounded-sm border border-stroke bg-slate-50 p-4 dark:border-strokedark dark:bg-meta-4/40">
                       <div className="space-y-3 font-serif text-lg text-black dark:text-white">
                         <div className="flex flex-wrap items-end justify-center gap-2 text-center text-2xl font-semibold">
-                          <span>ПАСПОРТ №</span>
+                          <span>Паспорт качества №</span>
                           {renderReservoirInput('passport_no', '', true)}
+                        </div>
+                        <div className="text-center text-2xl font-semibold">
+                          Наименование продукции: Бензин марки QuWatt АИ 95- К2-Л вырабатываемого по Ts16472899-043:2020
+                        </div>
+                        <div className="text-xl">
+                          Адрес и место осуществления испытаний: Лаборатория ООО Бухарский НПЗ, г. Караул Базар ул Мустакиллик 1 тел: 365-364-12-27
                         </div>
                         <div className="flex flex-wrap items-end gap-x-4 gap-y-2 text-xl">
                           <span>Изготовитель и заказчик: ООО  Бухарский НПЗ</span>
@@ -3857,8 +3863,14 @@ export default function PassportTemplateDetailPage() {
                     <div className="rounded-sm border border-stroke bg-slate-50 p-4 dark:border-strokedark dark:bg-meta-4/40">
                       <div className="space-y-3 font-serif text-lg text-black dark:text-white">
                         <div className="flex flex-wrap items-end justify-center gap-2 text-center text-2xl font-semibold">
-                          <span>ПАСПОРТ №</span>
+                          <span>Паспорт качества №</span>
                           {renderReservoirInput('passport_no', '', true)}
+                        </div>
+                        <div className="text-center text-2xl font-semibold">
+                          Наименование продукции: Бензин марки QuWatt АИ 95- К2-Л вырабатываемого по Ts16472899-043:2020
+                        </div>
+                        <div className="text-xl">
+                          Адрес и место осуществления испытаний: Лаборатория ООО Бухарский НПЗ, г. Караул Базар ул Мустакиллик 1 тел: 365-364-12-27
                         </div>
                         <div className="flex flex-wrap items-end gap-x-4 gap-y-2 text-xl">
                           <span>Изготовитель и заказчик : ООО  Бухарский НПЗ</span>

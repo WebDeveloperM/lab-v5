@@ -4245,7 +4245,7 @@ function buildDocDefinition(
               { text: 'Паспорт  Д№', bold: true, fontSize: 16 },
               { text: v('passport_no') ? v('passport_no') + nb.repeat(4) : nb.repeat(22), bold: true, fontSize: 16 },
             ] : [
-              { text: 'ПАСПОРТ № ', bold: true, fontSize: 16 },
+              { text: isAI95QW ? 'Паспорт качества № ' : 'ПАСПОРТ № ', bold: true, fontSize: 16 },
               { text: v('passport_no') ? v('passport_no') + nb.repeat(4) : nb.repeat(22), bold: true, fontSize: 16 },
             ],
             alignment: 'center',
@@ -4348,7 +4348,7 @@ function buildDocDefinition(
         fontSize: 11, bold: true, alignment: 'center', margin: [0, 0, 0, 3],
       },
       {
-        text: (isJetA1SSF || isAI91 || isAI92 || isAI95Plain)
+        text: (isJetA1SSF || isAI91 || isAI92 || isAI95Plain || isAI95QW)
           ? 'Адрес и место осуществления испытаний: Лаборатория ООО Бухарский НПЗ, г. Караул Базар ул Мустакиллик 1 тел: 365-364-12-27'
           : isJetA1Notice
             ? 'Адрес и место осуществления испытаний: Лаборатория ООО Бухарский НПЗ, г. Караул Базар ул Мустакиллик 1 тел: 365-364-12-27'
