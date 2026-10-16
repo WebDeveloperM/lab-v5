@@ -509,6 +509,7 @@ export default function PassportTemplateDetailPage() {
     'a91w9_copper', 'a91w11_acids', 'a91w12_mechanical', 'a91w13_appearance', 'a91w14_manganese', 'a91w15_iron',
     'r9_copper', 'r11_acids', 'r12_mechanical', 'r13_appearance', 'r14_manganese', 'r15_iron',
     'w9_copper', 'w11_acids', 'w12_mechanical', 'w13_appearance', 'w14_manganese', 'w15_iron',
+    'a91pr14_manganese', 'a91pr15_iron', 'a91pw14_manganese', 'a91pw15_iron',
     'ecoL62r4', 'ecoL62r11', 'ecoL62r13', 'ecoL40r4', 'ecoL40r11', 'ecoL40r13',
   ]);
 
@@ -527,9 +528,17 @@ export default function PassportTemplateDetailPage() {
     'a91r2_lead', 'a91w2_lead',
     'a92r2_lead', 'a92w2_lead',
     'a95r2_lead', 'a95w2_lead',
+    'a91pr2_lead', 'a91pw2_lead',
+    'a91pr10_density20', 'a91pw10_density20', 'a91pr10_density15', 'a91pw10_density15',
     'a91r10_density20', 'a91w10_density20', 'a91r10_density15', 'a91w10_density15',
     'a92r10_density20', 'a92w10_density20', 'a92r10_density15', 'a92w10_density15',
     'a95r10_density20', 'a95w10_density20', 'a95r10_density15', 'a95w10_density15',
+  ]);
+
+  // The shared-key rows that take "number or -" on АИ-92+присадка only (see renderActualValueCell).
+  const AI92P_NUMBER_OR_DASH_ROW_KEYS = new Set([
+    'r2_lead', 'w2_lead',
+    'r10_density20', 'w10_density20', 'r10_density15', 'w10_density15',
   ]);
 
   // Rows that need a number most of the time but occasionally "отсутствует" — a dropdown offering
@@ -707,7 +716,12 @@ export default function PassportTemplateDetailPage() {
         </div>
       );
     }
-    if (COMBO_TEXT_ROW_KEYS.has(row.key)) {
+    // r2_lead/w2_lead (lead, item 2) and r10_density20/15, w10_density20/15 (density, item 10) are
+    // shared with the plain benzin templates, so АИ-92+присадка is singled out here: these rows
+    // take a number or "-" typed directly (lead instead of the "отсутствует / свой вариант"
+    // dropdown, see COMBO_TEXT_ROW_KEYS).
+    const isAI92PLeadRow = isAI92P && AI92P_NUMBER_OR_DASH_ROW_KEYS.has(row.key);
+    if (COMBO_TEXT_ROW_KEYS.has(row.key) && !isAI92PLeadRow) {
       const fixedOptions = COMBO_TEXT_OPTIONS[row.key] || [];
       const isFixedValue = fixedOptions.includes(value);
       // A row already saved with a typed-in number (before this UI existed, or on an existing
@@ -753,7 +767,7 @@ export default function PassportTemplateDetailPage() {
         </div>
       );
     }
-    if (NUMBER_OR_DASH_ROW_KEYS.has(row.key)) {
+    if (NUMBER_OR_DASH_ROW_KEYS.has(row.key) || isAI92PLeadRow) {
       return (
         <input
           type="text"
@@ -3362,7 +3376,7 @@ export default function PassportTemplateDetailPage() {
                           <span >Резервуар:</span>
                           {renderReservoirInput('reservoir', '', true)}
                           <span >Замер :</span>
-                          {renderReservoirInput('measurement_no', '', true)} см
+                          {renderReservoirInput('measurement_no', '', true)}
                         </div>
 
                         <div className="flex flex-wrap items-end gap-x-5 gap-y-2 text-xl">

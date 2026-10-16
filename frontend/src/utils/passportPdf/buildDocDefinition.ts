@@ -1511,6 +1511,7 @@ function buildDocDefinition(
   const isAI95 = (tplLower.includes('аи-95') || tplLower.includes('ai-95')) && !isAI95QW;
   // isAI95 also covers АИ-95+присадка; header text changes made only for plain АИ-95 use this.
   const isAI95Plain = isAI95 && !tplLower.includes('присадка');
+  const isAI95P = isAI95 && !isAI95Plain;
   const isAI98 = tplLower.includes('аи-98') || tplLower.includes('ai-98');
   const hasDieselK4Standard = tplStandardLower.includes('610:2025') || tplStandardLower.includes('uztr.931-028:2017') || tplStandardLower.includes("o'zmst 610") || tplStandardLower.includes('ozmst 610');
   const isDieselByStandard = hasDieselK4Standard && (tplLower.includes('дизель') || tplLower.includes('дт') || tplLower.includes('евро'));
@@ -3690,6 +3691,35 @@ function buildDocDefinition(
         fontSize: 10, margin: [0, 0, 0, 6],
       },
     ];
+  } else if (isAI95P && type !== 'wagon') {
+    legacyFormFields = [
+      {
+        text: [
+          'Изготовитель и заказчик : ООО Бухарский НПЗ   Резервуар: ', ul('reservoir', 6),
+          '  Замер : ', ul('measurement_no', 8), '  Дата изготовления ', uld('manufacture_date', 12),
+        ],
+        fontSize: 10, margin: [0, 0, 0, 3],
+      },
+      {
+        text: [
+          'Дата отбора образцов: ', uld('sampling_date', 14),
+          ' по ГОСТ 2517   Дата поступления образцов: ', uld('receipt_date', 14),
+        ],
+        fontSize: 10, margin: [0, 0, 0, 3],
+      },
+      {
+        text: [
+          'Дата проведения испытаний: ', uld('test_date', 12),
+          '  Партия №: ', ul('batch_no', 6),
+          '  Октаноповышающая присадка: ', ul('additive', 14),
+        ],
+        fontSize: 10, margin: [0, 0, 0, 3],
+      },
+      {
+        text: ['Октаноповышающие добавки: ', ul('aromatic_hydrocarbons', 20)],
+        fontSize: 10, margin: [0, 0, 0, 6],
+      },
+    ];
   } else if (isAI95 && type === 'wagon') {
     legacyFormFields = [
       {
@@ -4111,6 +4141,35 @@ function buildDocDefinition(
         fontSize: 10, margin: [0, 0, 0, 6],
       },
     ];
+  } else if (isAI92P && type !== 'wagon') {
+    legacyFormFields = [
+      {
+        text: [
+          'Изготовитель и заказчик : ООО Бухарский НПЗ   Резервуар: ', ul('reservoir', 6),
+          '  Замер : ', ul('measurement_no', 8), '  Дата изготовления ', uld('manufacture_date', 12),
+        ],
+        fontSize: 10, margin: [0, 0, 0, 3],
+      },
+      {
+        text: [
+          'Дата отбора образцов: ', uld('sampling_date', 14),
+          ' по ГОСТ 2517   Дата поступления образцов: ', uld('receipt_date', 14),
+        ],
+        fontSize: 10, margin: [0, 0, 0, 3],
+      },
+      {
+        text: [
+          'Дата проведения испытаний: ', uld('test_date', 12),
+          '  Партия №: ', ul('batch_no', 6),
+          '  Октаноповышающая присадка: ', ul('additive', 14),
+        ],
+        fontSize: 10, margin: [0, 0, 0, 3],
+      },
+      {
+        text: ['Октаноповышающие добавки: ', ul('aromatic_hydrocarbons', 20)],
+        fontSize: 10, margin: [0, 0, 0, 6],
+      },
+    ];
   } else if (type === 'wagon') {
     legacyFormFields = [
       {
@@ -4259,8 +4318,8 @@ function buildDocDefinition(
           : isAI91
           ? `Наименование продукции: Бензин автомобильный марки АИ-91- К2-Л по ${tplStandard || "O'zDSt 3031:2015"}`
           : isAI91P
-          ? `Бензин автомобильный марки АИ-91- К2-Л по ${tplStandard || "O'zDSt 3031:2015"}`
-          : isAI92
+          ? `Наименование продукции: Бензин автомобильный марки АИ-91- К2-Л по ${tplStandard || "O'zDSt 3031:2015"}`
+          : (isAI92 || isAI92P)
             ? `Наименование продукции: Бензин автомобильный марки АИ-92- К2-Л по ${tplStandard || "O'zDSt 3031:2015"}`
             : isSzhizhennyyGaz
               ? "Наименование продукции: Сжиженные углеводородные газы, используемые для\nк коммунально-бытового и производственного потребления в качестве топлива марка ПБТ (Пропан-бутан технический) по ГОСТ 34858– 2022"
@@ -4339,7 +4398,7 @@ function buildDocDefinition(
             : isAI95QW
               ? 'Наименование продукции: Бензин марки  QuWatt  АИ 95- К2-Л вырабатываемого по Ts16472899-043:2020'
               : isAI95
-                ? `${isAI95Plain ? 'Наименование продукции: ' : ''}Бензин автомобильный марки АИ-95- К2-Л по ${tplStandard || "O'zDSt 3031:2015"}`
+                ? `Наименование продукции: Бензин автомобильный марки АИ-95- К2-Л по ${tplStandard || "O'zDSt 3031:2015"}`
                 : isAI98
                   ? `Бензин автомобильный марки АИ-98- К2-Л по ${tplStandard || "O'zDSt 3031:2015"}`
                   : isJetA1SSF
@@ -4350,7 +4409,7 @@ function buildDocDefinition(
         fontSize: 11, bold: true, alignment: 'center', margin: [0, 0, 0, 3],
       },
       {
-        text: (isJetA1SSF || isAI91 || isAI92 || isAI95Plain || isAI95QW)
+        text: (isJetA1SSF || isAI91 || isAI91P || isAI92 || isAI92P || isAI95 || isAI95QW)
           ? 'Адрес и место осуществления испытаний: Лаборатория ООО Бухарский НПЗ, г. Караул Базар ул Мустакиллик 1 тел: 365-364-12-27'
           : isJetA1Notice
             ? 'Адрес и место осуществления испытаний: Лаборатория ООО Бухарский НПЗ, г. Караул Базар ул Мустакиллик 1 тел: 365-364-12-27'
