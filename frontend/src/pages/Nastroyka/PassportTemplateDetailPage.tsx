@@ -3369,6 +3369,12 @@ export default function PassportTemplateDetailPage() {
                           <span >ПАСПОРТ №</span>
                           {renderReservoirInput('passport_no', '', true)}
                         </div>
+                        <div className="text-center text-2xl font-semibold">
+                          Наименование продукции: Бензин автомобильный марки АИ-92- К2-Л по O&apos;zDSt 3031:2015
+                        </div>
+                        <div className="text-xl">
+                          Адрес и место осуществления испытаний: Лаборатория ООО Бухарский НПЗ, г. Караул Базар ул Мустакиллик 1 тел: 365-364-12-27
+                        </div>
 
                         <div className="flex flex-wrap items-end gap-x-5 gap-y-2 text-xl">
                           <span>Изготовитель и заказчик :</span>
@@ -3605,6 +3611,12 @@ export default function PassportTemplateDetailPage() {
                         <div className="flex flex-wrap items-end justify-center gap-2 text-center text-2xl font-semibold">
                           <span>ПАСПОРТ №</span>
                           {renderReservoirInput('passport_no', '', true)}
+                        </div>
+                        <div className="text-center text-2xl font-semibold">
+                          Наименование продукции: Бензин автомобильный марки АИ-95- К2-Л по O&apos;zDSt 3031:2015
+                        </div>
+                        <div className="text-xl">
+                          Адрес и место осуществления испытаний: Лаборатория ООО Бухарский НПЗ, г. Караул Базар ул Мустакиллик 1 тел: 365-364-12-27
                         </div>
                         <div className="flex flex-wrap items-end gap-x-5 gap-y-2 text-xl">
                           <span>Изготовитель и заказчик : ООО Бухарский НПЗ</span>
@@ -4048,6 +4060,12 @@ export default function PassportTemplateDetailPage() {
                         <div className="flex flex-wrap items-end justify-center gap-2 text-center text-2xl font-semibold">
                           <span>ПАСПОРТ №</span>
                           {renderReservoirInput('passport_no', '', true)}
+                        </div>
+                        <div className="text-center text-2xl font-semibold">
+                          Наименование продукции: Бензин автомобильный марки АИ-91- К2-Л по O&apos;zDSt 3031:2015
+                        </div>
+                        <div className="text-xl">
+                          Адрес и место осуществления испытаний: Лаборатория ООО Бухарский НПЗ, г. Караул Базар ул Мустакиллик 1 тел: 365-364-12-27
                         </div>
                         <div className="flex flex-wrap items-end gap-x-5 gap-y-2 text-xl">
                           <span>Изготовитель и заказчик : ООО Бухарский НПЗ</span>
